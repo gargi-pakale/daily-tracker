@@ -1,4 +1,4 @@
-const CACHE = "days-v1.8.2";
+const CACHE = "days-v1.9.0";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

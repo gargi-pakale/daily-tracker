@@ -43,8 +43,16 @@ header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bott
 @media (display-mode:standalone){
   header{padding-top:calc(max(env(safe-area-inset-top), 44px) + 10px)}
 }
-.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .name{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1}
+/* which tracker you are looking at — the two live side by side and share nothing
+   but the five colours */
+.tsw{display:flex;gap:3px;padding:3px;border-radius:13px;background:var(--surface);
+  border:1px solid var(--line);flex:0 0 auto}
+.tsw button{padding:8px 15px;border-radius:10px;font-size:14px;font-weight:650;
+  letter-spacing:-.01em;color:var(--dim);transition:background .16s ease,color .16s ease}
+.tsw button.on{background:var(--surface2);color:var(--text)}
+.tsw button:not(.on):active{background:var(--bg)}
 .who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em;
   display:inline-flex;align-items:center;gap:6px}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;
@@ -197,8 +205,11 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .mixrow .mv{font-family:var(--mono);font-size:13px;flex:0 0 38px;text-align:right}
 .mixrow .mn{font-family:var(--mono);font-size:11px;color:var(--dimmer);flex:0 0 22px;text-align:right}
 .row{margin-top:15px}
-.row .rl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:6px}
-.row .rl b{font-weight:620} .row .rl span{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.row .rl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:13px;margin-bottom:6px}
+.row .rl b{font-weight:620;flex:0 1 auto;min-width:0}
+.row .rl span{font-family:var(--mono);font-size:12px;color:var(--dim);
+  flex:0 1 auto;min-width:0;text-align:right}
 .track{display:flex;height:11px;border-radius:6px;overflow:hidden;background:var(--surface2)}
 .track i{display:block;height:100%}
 .rkey{display:flex;gap:12px;margin-top:9px;flex-wrap:wrap}
@@ -220,7 +231,7 @@ nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--l
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
 nav button{position:relative;flex:1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   font-weight:650;color:var(--dimmer);line-height:1.1;
-  padding:4px 0 calc(3px + clamp(0px, env(safe-area-inset-bottom), 6px))}
+  padding:11px 0 calc(11px + clamp(0px, env(safe-area-inset-bottom), 6px))}
 nav button.on{color:var(--text)}
 nav button .ind{position:absolute;top:0;left:50%;transform:translateX(-50%);
   width:18px;height:2px;border-radius:0 0 2px 2px;background:transparent}
@@ -264,7 +275,10 @@ nav button.on .ind{background:var(--text)}
 
 <header>
   <div class="hrow">
-    <div class="name">Daily Tracker</div>
+    <div class="tsw" id="tsw">
+      <button data-t="days">Days</button>
+      <button data-t="sleep">Sleep</button>
+    </div>
     <button class="who" id="gearBtn">DATA<span class="badge" id="gearBadge" hidden></span></button>
   </div>
   <div class="date" id="dateLine"></div>
@@ -289,27 +303,79 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.8.2";
-const SCHEMA_VERSION = 1;
+const APP_VERSION = "1.9.0";
+const SCHEMA_VERSION = 2;   /* 2 adds `tracker` to every row; rows without one are days */
 const WINDOW_DAYS = 7;               /* today plus the six before it */
 const EDIT_WINDOW = WINDOW_DAYS - 1; /* ...expressed as days back */
 
+/* the five colours are the one thing both trackers share outright; the words
+   under each label come from the tracker (TRACKERS[...].subs) */
 const RATINGS = {
-  xgreen: {label:"Extra green", sub:"One of the best", hex:"#3FD07A", cls:"gg", extra:true},
-  green:  {label:"Green",       sub:"Good",           hex:"#56A06B", cls:"g"},
-  yellow: {label:"Yellow",      sub:"Mixed",          hex:"#E3A63F", cls:"y"},
-  red:    {label:"Red",         sub:"Rough",          hex:"#C4605A", cls:"r"},
-  xred:   {label:"Extra red",   sub:"One of the worst",hex:"#F2453D", cls:"rr", extra:true}
+  xgreen: {label:"Extra green", hex:"#3FD07A", cls:"gg", extra:true},
+  green:  {label:"Green",       hex:"#56A06B", cls:"g"},
+  yellow: {label:"Yellow",      hex:"#E3A63F", cls:"y"},
+  red:    {label:"Red",         hex:"#C4605A", cls:"r"},
+  xred:   {label:"Extra red",   hex:"#F2453D", cls:"rr", extra:true}
 };
 const RORDER = ["xgreen","green","yellow","red","xred"];
 const isGood = r => r === "green" || r === "xgreen";
 
-const REASONS = {
-  me:     {label:"Me",        sub:"Something in me — mood, choices, headspace", hex:"#8A79C6"},
-  others: {label:"Others",    sub:"People around me",                          hex:"#5B8ED8"},
-  health: {label:"My health", sub:"Body, energy, sleep, pain",                 hex:"#4E9EA3"}
+/* Two trackers share the five colours, the seven-day window, the calendar, the
+   charts and the backup file. Everything that differs between them lives here. */
+const TRACKERS = {
+  days: {
+    label:"Days", noun:"day", nounPl:"days", every:"every day",
+    prompt:"What drove it",
+    placeholder:"Anything worth remembering about this day",
+    mix:"Day mix",
+    hint:"",
+    subs:{xgreen:"One of the best", green:"Good", yellow:"Mixed", red:"Rough",
+          xred:"One of the worst"},
+    order:["me","others","health"],
+    reasons:{
+      me:     {label:"Me",        sub:"Something in me — mood, choices, headspace",
+               phrase:"me",        hex:"#8A79C6"},
+      others: {label:"Others",    sub:"People around me",
+               phrase:"others",    hex:"#5B8ED8"},
+      health: {label:"My health", sub:"Body, energy, sleep, pain",
+               phrase:"my health", hex:"#4E9EA3"}
+    }
+  },
+  sleep: {
+    label:"Sleep", noun:"night", nounPl:"nights", every:"every night",
+    prompt:"What drove the night",
+    placeholder:"Anything worth remembering about this night",
+    mix:"Night mix",
+    hint:"A night belongs to the day it ended on — log this morning's sleep under today.",
+    subs:{xgreen:"One of the best nights", green:"Slept well", yellow:"Mixed",
+          red:"Rough night", xred:"One of the worst nights"},
+    order:["health","alarm","early","late","ted","duration"],
+    reasons:{
+      health:   {label:"My health", sub:"Body, pain, illness, energy",
+                 phrase:"my health",       hex:"#4E9EA3"},
+      alarm:    {label:"Alarm",     sub:"How the morning ended — or did not",
+                 phrase:"the alarm",       hex:"#DE8FA6"},
+      early:    {label:"Early",     sub:"An early night, or an early start",
+                 phrase:"an early night",  hex:"#7FD1C4"},
+      late:     {label:"Late",      sub:"A late night, or a late start",
+                 phrase:"a late night",    hex:"#7C6FD0"},
+      ted:      {label:"Ted",       sub:"Sharing the night with Ted",
+                 phrase:"Ted",             hex:"#B57BC9"},
+      duration: {label:"Duration",  sub:"How long it lasted, however it felt",
+                 phrase:"how long it was", hex:"#5B8ED8"}
+    }
+  }
 };
-const XORDER = ["me","others","health"];
+let tracker = "days";
+const T = () => TRACKERS[tracker];
+/* kept as plain globals so every render below reads the current tracker's set
+   without threading it through */
+let REASONS = TRACKERS.days.reasons;
+let XORDER  = TRACKERS.days.order;
+const reasonPhrase = x => REASONS[x].phrase || REASONS[x].label.toLowerCase();
+function applyTracker(t){
+  tracker = t; REASONS = T().reasons; XORDER = T().order;
+}
 
 /* ================= storage ================= */
 const ERRORS = [];
@@ -360,9 +426,12 @@ function idbGet(k){
   });
 }
 
+const trackerOf = e => e.tracker || "days";      /* pre-1.9 rows are day rows */
+/* every live row of one tracker, newest first */
+const live = tk => entries.filter(e => !e.deleted_at && trackerOf(e) === (tk || tracker));
 function reindex(){
   index = new Map();
-  entries.forEach(e => { if(!e.deleted_at) index.set(e.date, e); });
+  entries.forEach(e => { if(!e.deleted_at && trackerOf(e) === tracker) index.set(e.date, e); });
 }
 function save(){
   entries = mergeSets(entries, []);   /* one row per date, newest wins */
@@ -378,22 +447,29 @@ async function load(){
   const b = await idbGet("entries");
   entries = mergeSets(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []);
   const ma = lsGet(LS_META, null), mb = await idbGet("meta");
-  meta = Object.assign({lastBackup:null}, mb || {}, ma || {});
+  meta = Object.assign({lastBackup:null, tracker:"days"}, mb || {}, ma || {});
+  applyTracker(TRACKERS[meta.tracker] ? meta.tracker : "days");
   if(a === null && b === null){
     try { localStorage.setItem("days.test","1"); localStorage.removeItem("days.test"); }
     catch(e){ memoryOnly = true; logErr("storage unavailable", e); }
   }
   reindex();
 }
-/* merge by date, newest updated_at wins — lets two backups combine cleanly */
+/* merge by tracker + date, newest updated_at wins — lets two backups combine
+   cleanly, and keeps a night and a day on the same date apart. Rows from a
+   tracker this build does not know are carried through untouched rather than
+   dropped, so an older app can never eat newer data. */
 function mergeSets(x, y){
   const m = new Map();
   x.concat(y).forEach(e => {
     if(!e || !e.date) return;
-    const p = m.get(e.date);
-    if(!p || (e.updated_at || "") > (p.updated_at || "")) m.set(e.date, e);
+    if(!e.tracker) e.tracker = "days";
+    const k = e.tracker + "|" + e.date;
+    const p = m.get(k);
+    if(!p || (e.updated_at || "") > (p.updated_at || "")) m.set(k, e);
   });
-  return Array.from(m.values()).sort((a,b) => b.date.localeCompare(a.date));
+  return Array.from(m.values())
+    .sort((a,b) => b.date.localeCompare(a.date) || a.tracker.localeCompare(b.tracker));
 }
 
 /* ================= date helpers ================= */
@@ -416,16 +492,19 @@ function daysSince(iso){ return iso ? Math.floor((Date.now() - new Date(iso).get
 function buzz(){ try { navigator.vibrate && navigator.vibrate(8); } catch(e){} }
 const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
 const zeroed = keys => keys.reduce((o,k) => (o[k] = 0, o), {});
+/* "1 night", "6 nights" — the count and its noun, from the tracker on screen */
+const nOf = n => n + " " + (n === 1 ? T().noun : T().nounPl);
 
 /* ================= writing ================= */
 function putDay(date, rating, reason, note){
   const now = new Date().toISOString();
-  const old = entries.find(e => e.date === date);   /* tombstones included, so re-logging revives */
+  /* tombstones included, so re-logging revives */
+  const old = entries.find(e => e.date === date && trackerOf(e) === tracker);
   if(old){
     old.rating = rating; old.reason = reason; old.note = note || "";
     old.updated_at = now; old.deleted_at = null;
   } else {
-    entries.push({date:date, rating:rating, reason:reason, note:note || "",
+    entries.push({tracker:tracker, date:date, rating:rating, reason:reason, note:note || "",
       created_at:now, updated_at:now, deleted_at:null, schema_version:SCHEMA_VERSION});
   }
   save();
@@ -453,6 +532,8 @@ function refreshCurrent(){ RENDER[tab](); stale[tab] = false; }
 function renderHeader(){
   document.getElementById("dateLine").textContent =
     new Date().toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"}).toUpperCase();
+  document.querySelectorAll("#tsw button")
+    .forEach(b => b.classList.toggle("on", b.dataset.t === tracker));
 }
 function renderBanners(){
   const b = [];
@@ -514,7 +595,7 @@ function ratesHTML(sel){
       '" data-r="' + r + '" style="--c:' + RATINGS[r].hex + '">' +
       '<span class="swatch"></span>' +
       '<span class="t"><span class="lbl">' + RATINGS[r].label + '</span>' +
-      '<span class="sub">' + RATINGS[r].sub + '</span></span></button>').join("") + '</div>';
+      '<span class="sub">' + T().subs[r] + '</span></span></button>').join("") + '</div>';
 }
 function chipsHTML(sel, enabled){
   return '<div class="chips' + (enabled ? "" : " off") + '">' +
@@ -547,7 +628,7 @@ function renderLog(){
       '<div class="readout"><div class="big" style="--c:' + RATINGS[existing.rating].hex + '">' +
         '<i></i><b>' + RATINGS[existing.rating].label + '</b>' +
         '<span style="color:var(--dim);font-size:14px">because of ' +
-          REASONS[existing.reason].label.toLowerCase() + '</span></div>' +
+          reasonPhrase(existing.reason) + '</span></div>' +
         (existing.note ? '<div class="note">' + esc(existing.note) + '</div>'
                        : '<div class="hint">No comment on this day.</div>') + '</div>' +
       '<button class="btn" id="chg">Change this day</button>';
@@ -563,15 +644,16 @@ function renderLog(){
     '<div class="picked">' + fmtDay(logDate) +
       '<span>' + (existing ? "ALREADY LOGGED · EDITING" : "NOT LOGGED YET") + '</span></div>' +
     tiles +
-    '<label style="margin-top:22px">What drove it</label>' + chips +
+    '<label style="margin-top:22px">' + T().prompt + '</label>' + chips +
     '<label for="nt">Comment (optional)</label>' +
-    '<textarea id="nt" placeholder="Anything worth remembering about this day">' + esc(draft.note) + '</textarea>' +
+    '<textarea id="nt" placeholder="' + T().placeholder + '">' + esc(draft.note) + '</textarea>' +
     '<button class="btn primary" id="sv"' + (ready ? "" : " disabled") + '>' +
-      (existing ? "Update this day" : "Save this day") + '</button>' +
+      (existing ? "Update this " + T().noun : "Save this " + T().noun) + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
     '<div class="hint">Tap any day in the strip above to fill in or change it. ' +
-      'Anything older than these ' + WINDOW_DAYS + ' days is locked, so the history stays honest.</div>';
+      'Anything older than these ' + WINDOW_DAYS + ' days is locked, so the history stays honest.' +
+      (T().hint ? '<br>' + T().hint : '') + '</div>';
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
   /* Selection only flips classes — the comment box is never rebuilt, so the
@@ -589,7 +671,7 @@ function renderLog(){
     buzz(); renderHeader(); renderBanners();
     logEditing = false; renderLog(); stale.log = false;
     toast(fmtDay(logDate) + " saved",
-      RATINGS[draft.rating].label + " · " + REASONS[draft.reason].label);
+      T().label + " · " + RATINGS[draft.rating].label + " · " + REASONS[draft.reason].label);
   };
   view.querySelector("#rm").onclick = () => {
     if(!confirm("Remove the entry for " + fmtDay(logDate) + "?")) return;
@@ -615,7 +697,7 @@ function syncLog(){
   view.querySelector(".chips").classList.toggle("off", !draft.rating);
   const sv = view.querySelector("#sv");
   sv.disabled = !(draft.rating && draft.reason);
-  sv.textContent = existing ? "Update this day" : "Save this day";
+  sv.textContent = (existing ? "Update this " : "Save this ") + T().noun;
   view.querySelector("#rm").hidden = !existing;
   view.querySelector(".picked span").textContent =
     existing ? "ALREADY LOGGED · EDITING" : "NOT LOGGED YET";
@@ -669,9 +751,9 @@ function renderHistory(){
       '<div><i style="border-radius:50%;background:var(--surface);border:1px solid var(--line)"></i>Not logged</div>' +
     '</div>' +
     '<div class="sec"><div class="sechead"><div class="eyebrow">This month</div>' +
-      '<div class="eyebrow">' + logged + ' of ' + elapsed + ' days logged</div></div>' +
+      '<div class="eyebrow">' + logged + ' of ' + nOf(elapsed) + ' logged</div></div>' +
       (logged ? splitBar(counts, logged) + mixRows(counts, logged)
-              : '<div class="empty">Nothing logged this month yet.</div>') +
+              : '<div class="empty">No ' + T().nounPl + ' logged this month yet.</div>') +
     '</div>' +
     '<div class="hint" style="margin-top:18px">Tap a day to see what you put down. ' +
       'Changes are made on the Log tab.</div>';
@@ -705,10 +787,11 @@ function daySheet(k){
     ? '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
         '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
         '<span style="color:var(--dim);font-size:14px">because of ' +
-          REASONS[e.reason].label.toLowerCase() + '</span></div>' +
+          reasonPhrase(e.reason) + '</span></div>' +
         (e.note ? '<div class="note">' + esc(e.note) + '</div>'
                 : '<div class="hint">No comment on this day.</div>') + '</div>'
-    : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged for this day.</div></div>';
+    : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged on the ' +
+        T().label.toLowerCase() + ' tracker for this day.</div></div>';
 
   body += '<div class="hint">' + (editable(k)
     ? 'To change this, open it on the Log tab.'
@@ -725,7 +808,7 @@ let range = "30";
 
 function inRange(){
   const r = RANGES.find(x => x.k === range);
-  const all = entries.filter(e => !e.deleted_at);
+  const all = live();
   if(!r.days) return all;
   const cut = shiftKey(todayKey(), -(r.days - 1));
   return all.filter(e => e.date >= cut);
@@ -768,7 +851,7 @@ function renderCharts(){
     '<button data-k="' + r.k + '"' + (range === r.k ? ' class="on"' : '') + '>' + r.label + '</button>').join("") + '</div>';
 
   if(!total){
-    view.innerHTML = bar + '<div class="empty">Nothing logged in this range yet.<br>Log a few days and the picture shows up here.</div>';
+    view.innerHTML = bar + '<div class="empty">No ' + T().nounPl + ' logged in this range yet.<br>Log a few and the picture shows up here.</div>';
     view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });
     return;
   }
@@ -788,7 +871,7 @@ function renderCharts(){
   const cdefs = RORDER.map(r => ({k:r, hex:RATINGS[r].hex}));
 
   /* streaks over the whole log, not just the range */
-  const all = entries.filter(e => !e.deleted_at).slice().sort((a,b) => a.date.localeCompare(b.date));
+  const all = live().slice().sort((a,b) => a.date.localeCompare(b.date));
   let best = 0, run = 0, prev = null;
   all.forEach(e => {
     run = (isGood(e.rating) && prev && e.date === shiftKey(prev, 1)) ? run + 1
@@ -810,23 +893,23 @@ function renderCharts(){
   const greenTop = topFor("green"), redTop = topFor("red");
 
   view.innerHTML = bar +
-    '<div class="sec"><div class="sechead"><div class="eyebrow">Day mix</div>' +
+    '<div class="sec"><div class="sechead"><div class="eyebrow">' + T().mix + '</div>' +
       '<div class="eyebrow">' + total + ' logged</div></div>' +
       splitBar(counts, total) + mixRows(counts, total) + '</div>' +
 
     '<div class="sec"><div class="sechead"><div class="eyebrow">Behind each colour</div></div>' +
       '<div class="card">' +
       RORDER.map(r => counts[r]
-        ? trackRow(RATINGS[r].label + " days", counts[r] + " · mostly " +
-            REASONS[XORDER.slice().sort((a,b) => byRating[r][b] - byRating[r][a])[0]].label.toLowerCase(),
+        ? trackRow(RATINGS[r].label + " " + T().nounPl, counts[r] + " · mostly " +
+            reasonPhrase(XORDER.slice().sort((a,b) => byRating[r][b] - byRating[r][a])[0]),
             byRating[r], rdefs, counts[r])
-        : trackRow(RATINGS[r].label + " days", "none", byRating[r], rdefs, 0)).join("") +
+        : trackRow(RATINGS[r].label + " " + T().nounPl, "none", byRating[r], rdefs, 0)).join("") +
       reasonKey() + '</div></div>' +
 
     '<div class="sec"><div class="sechead"><div class="eyebrow">Each reason&rsquo;s record</div></div>' +
       '<div class="card">' +
       XORDER.map(x => trackRow(REASONS[x].label,
-        rCounts[x] ? rCounts[x] + " days · " + pct(byReason[x].green, rCounts[x]) + "% green" : "none",
+        rCounts[x] ? nOf(rCounts[x]) + " · " + pct(byReason[x].green, rCounts[x]) + "% green" : "none",
         byReason[x], cdefs, rCounts[x])).join("") +
       ratingKey() + '</div></div>' +
 
@@ -847,13 +930,13 @@ function renderCharts(){
 
     '<div class="sec"><div class="card"><h3>The short version</h3><p>' +
       'Over ' + (RANGES.find(x => x.k === range).days ? "the last " + RANGES.find(x => x.k === range).label : "everything logged") +
-      ', <b>' + pct(goodDays, total) + '%</b> of your days came out green or better' +
+      ', <b>' + pct(goodDays, total) + '%</b> of your ' + T().nounPl + ' came out green or better' +
       (counts.xgreen ? ', including ' + counts.xgreen + ' you called extra green' : '') + '. ' +
       REASONS[topReason].label + ' is the reason you point at most often (' +
-      pct(rCounts[topReason], total) + '% of days). ' +
-      (counts.green ? "Green days are usually down to " + REASONS[greenTop].label.toLowerCase() + ". " : "") +
-      (counts.red ? "Red days are usually down to " + REASONS[redTop].label.toLowerCase() + ". " : "") +
-      (counts.xred ? counts.xred + " day" + (counts.xred === 1 ? " was" : "s were") + " extra red." :
+      pct(rCounts[topReason], total) + '% of ' + T().nounPl + '). ' +
+      (counts.green ? "Green " + T().nounPl + " are usually down to " + reasonPhrase(greenTop) + ". " : "") +
+      (counts.red ? "Red " + T().nounPl + " are usually down to " + reasonPhrase(redTop) + ". " : "") +
+      (counts.xred ? counts.xred + " " + T().noun + (counts.xred === 1 ? " was" : "s were") + " extra red." :
         (badDays ? "" : "Nothing landed in the red.")) +
       '</p></div></div>';
 
@@ -872,6 +955,26 @@ function go(t){
   if(!same) SCROLLER.scrollTop = scrollMem[t] || 0;
 }
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => go(b.dataset.tab)));
+
+/* Switching tracker keeps the tab you are on but rebuilds all three panes: the
+   index, the draft and every chart are scoped to one tracker at a time. */
+function setTracker(t){
+  if(t === tracker || !TRACKERS[t]) return;
+  scrollMem[tab] = SCROLLER.scrollTop;
+  applyTracker(t);
+  meta.tracker = t;
+  lsSet(LS_META, meta); idbPut("meta", meta);
+  reindex();
+  if(!editable(logDate)) logDate = todayKey();
+  logEditing = false; loadDraft();
+  stale.log = stale.history = stale.charts = true;
+  scrollMem.log = scrollMem.history = scrollMem.charts = 0;
+  renderHeader(); refreshCurrent();
+  SCROLLER.scrollTop = 0;
+  buzz();
+}
+document.querySelectorAll("#tsw button")
+  .forEach(b => b.addEventListener("click", () => setTracker(b.dataset.t)));
 
 /* ================= toast + sheet ================= */
 let toastT = null;
@@ -908,7 +1011,8 @@ function dataSheet(){
     (ns.length ? '' : '<div class="hint" style="margin-top:12px">Nothing needs your attention. ' +
       'A backup reminder appears here every Sunday.</div>') +
     '<div class="card" style="margin-top:16px">' +
-      '<div class="kv"><span>Days on record</span><span>' + entries.filter(e => !e.deleted_at).length + '</span></div>' +
+      Object.keys(TRACKERS).map(t => '<div class="kv"><span>' + TRACKERS[t].label +
+        ' on record</span><span>' + live(t).length + '</span></div>').join("") +
       '<div class="kv"><span>Last backup</span><span>' +
         (meta.lastBackup ? (since === 0 ? "today" : since + "d ago") : "never") + '</span></div>' +
       '<div class="kv"><span>Version</span><span>' + APP_VERSION + '</span></div>' +
@@ -925,8 +1029,9 @@ function dataSheet(){
     '<label for="pastebox">Or paste a backup</label>' +
     '<textarea id="pastebox" placeholder="Paste copied backup text here"></textarea>' +
     '<button class="btn" onclick="restorePasted()">Restore from pasted text</button>' +
-    '<div class="hint">Either way days merge by date and the newer version of a day ' +
-      'wins — restoring never loses what you have already logged.</div>' +
+    '<div class="hint">One backup holds both trackers. Either way entries merge by ' +
+      'tracker and date and the newer version wins — restoring never loses what you ' +
+      'have already logged.</div>' +
     '<button class="btn" onclick="forceUpdate()">Check for update</button>' +
     (ERRORS.length ? '<label>Errors</label><div class="log">' + esc(ERRORS.join("\n")) + '</div>' : '') +
     '<button class="btn" onclick="closeSheet()">Close</button>');
@@ -996,10 +1101,11 @@ function exportJSON(){
   });
 }
 function exportCSV(){
-  const head = ["date","weekday","rating","reason","comment","created_at","updated_at"];
+  const head = ["tracker","date","weekday","rating","reason","comment","created_at","updated_at"];
   const q = s => '"' + String(s == null ? "" : s).replace(/"/g,'""') + '"';
-  const rows = entries.filter(e => !e.deleted_at).slice().sort((a,b) => a.date.localeCompare(b.date)).map(e => [
-    e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"}), e.rating, e.reason, e.note,
+  const rows = entries.filter(e => !e.deleted_at).slice()
+    .sort((a,b) => a.date.localeCompare(b.date) || trackerOf(a).localeCompare(trackerOf(b))).map(e => [
+    trackerOf(e), e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"}), e.rating, e.reason, e.note,
     e.created_at, e.updated_at
   ].map(q).join(","));
   sendFile("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv")
@@ -1013,7 +1119,8 @@ function ingest(text, what){
     const before = entries.length;
     entries = mergeSets(entries, incoming);
     save(); loadDraft(); renderHeader(); renderBanners();
-    alert("Restored. " + (entries.length - before) + " new days added, " + entries.length + " total.");
+    alert("Restored. " + (entries.length - before) + " new entries added, " + entries.length +
+      " total — " + Object.keys(TRACKERS).map(t => live(t).length + " " + TRACKERS[t].nounPl).join(", ") + ".");
     closeSheet(); refreshCurrent();
   } catch(e){ logErr("import", e); alert("Could not read that " + what + ": " + e.message); }
 }

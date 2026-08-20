@@ -1,8 +1,9 @@
 # Days — setup
 
-Rate every day on five levels — extra green, green, yellow, red, extra red —
-say what drove it, and watch the pattern show up. Everything stays on your
-phone. No account, no server, no one else.
+Rate every day, and every night, on five levels — extra green, green, yellow,
+red, extra red — say what drove it, and watch the pattern show up. The switch at
+the top left moves between the **Days** tracker and the **Sleep** tracker.
+Everything stays on your phone. No account, no server, no one else.
 
 ## Put it online (once, on a computer)
 
@@ -25,6 +26,11 @@ Do this before you start logging. Anything logged in Safari stays in Safari and
 will not appear in the Home Screen app — they are separate storage.
 
 ## How it works
+
+**Switching tracker** — the pill at the top left is Days / Sleep. Each keeps its
+own entries, its own calendar and its own charts; only the five colours and the
+backup file are shared. On the Sleep tracker a night belongs to the day it ended
+on, so this morning's sleep goes under today.
 
 **Log** — the strip along the top is the last week, each day painted its own
 colour so you can see the run you are on. Tap a day to work on it: pick a level,
