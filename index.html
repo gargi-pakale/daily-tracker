@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Days</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Days">
+<meta name="theme-color" content="#12151C">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#12151C; --surface:#1B1F29; --surface2:#232834; --line:#2E3440;
+  --text:#E8EAEF; --dim:#8A93A6; --dimmer:#5C6478;
+  --green:#56A06B; --yellow:#E3A63F; --red:#C4605A;
+  --me:#8A79C6; --others:#5B8ED8; --health:#4E9EA3;
+  --warn:#E3A63F; --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --pad:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header,#banners,main{max-width:430px;margin-left:auto;margin-right:auto}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:none;padding:0;cursor:pointer}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);font-weight:600}
+
+/* ---- header ---- */
+header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.name{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em}
+.date{margin-top:5px;font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.04em}
+/* ---- banners ---- */
+.banner{margin:12px var(--pad) 0;padding:11px 13px;border-radius:11px;font-size:13px;line-height:1.45;
+  background:rgba(227,166,63,.11);border:1px solid rgba(227,166,63,.32);color:#F0C989;
+  display:flex;gap:10px;align-items:flex-start}
+.banner b{color:var(--warn);font-weight:600}
+.banner button{color:#F0C989;text-decoration:underline;font-size:13px;flex:0 0 auto}
+
+main{padding:0 var(--pad)}
+.sec{margin-top:24px}
+.sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.card p{margin:0;font-size:13px;color:var(--dim);line-height:1.5}
+.empty{font-size:13px;color:var(--dimmer);line-height:1.5;padding:22px 0;text-align:center}
+
+/* ---- day picker strip (Log tab) ---- */
+.dsel{display:flex;gap:6px;margin-top:16px}
+.dsel button{flex:1 1 0;padding:9px 0 8px;border-radius:11px;background:var(--surface);
+  border:1px solid var(--line);text-align:center;position:relative}
+.dsel .wd{display:block;font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650}
+.dsel .dn{display:block;font-family:var(--mono);font-size:14px;margin-top:3px;color:var(--dim)}
+.dsel button.on{background:var(--surface2);border-color:var(--dim)}
+.dsel button.on .dn,.dsel button.on .wd{color:var(--text)}
+.dsel .pip{display:block;width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:transparent}
+.dsel .pip.g{background:var(--green)} .dsel .pip.y{background:var(--yellow)} .dsel .pip.r{background:var(--red)}
+
+.picked{margin-top:18px;font-size:19px;font-weight:680;letter-spacing:-.01em}
+.picked span{display:block;font-size:11px;font-family:var(--mono);color:var(--dimmer);
+  letter-spacing:.06em;margin-top:3px;font-weight:400}
+
+/* ---- rating tiles ---- */
+.rates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px}
+.rate{aspect-ratio:.92/1;border-radius:16px;background:var(--surface);border:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:space-between;padding:12px;text-align:left;
+  transition:transform .09s ease,background .16s ease,border-color .16s ease;overflow:hidden}
+.rate:active{transform:scale(.965)}
+.rate .swatch{width:26px;height:26px;border-radius:9px;background:var(--c)}
+.rate .lbl{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.rate .sub{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
+  font-weight:650;margin-top:3px}
+.rate.on{background:var(--c);border-color:var(--c)}
+.rate.on .lbl{color:#12151C} .rate.on .sub{color:rgba(18,21,28,.66)}
+.rate.on .swatch{background:rgba(18,21,28,.28)}
+.rates.tight .rate{aspect-ratio:auto;flex-direction:row;align-items:center;justify-content:flex-start;
+  gap:9px;padding:12px 10px}
+.rates.tight .rate .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto}
+.rates.tight .rate .lbl{font-size:14px}
+.rates.tight .rate .sub{display:none}
+
+/* ---- reason chips ---- */
+.chips{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.chip{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:13px;
+  background:var(--surface);border:1px solid var(--line);text-align:left;
+  transition:background .16s ease,border-color .16s ease,opacity .16s}
+.chip:active{transform:scale(.985)}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.chip .t{flex:1;min-width:0}
+.chip .t b{display:block;font-size:15px;font-weight:620;letter-spacing:-.01em}
+.chip .t i{display:block;font-style:normal;font-size:11px;color:var(--dimmer);margin-top:2px}
+.chip.on{background:var(--surface2);border-color:var(--c)}
+.chips.off{opacity:.34;pointer-events:none}
+.chips.tight{flex-direction:row;gap:7px}
+.chips.tight .chip{flex:1 1 0;flex-direction:column;align-items:flex-start;gap:8px;padding:11px 10px}
+.chips.tight .chip .t b{font-size:13px}
+.chips.tight .chip .t i{display:none}
+
+/* ---- forms / buttons ---- */
+label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);
+  font-weight:600;margin:18px 0 6px}
+textarea,input[type=text]{width:100%;padding:12px;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;font-size:16px;-webkit-appearance:none}
+textarea{min-height:80px;resize:vertical;line-height:1.5}
+textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;border-color:transparent}
+.btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--surface2);
+  border:1px solid var(--line);font-size:15px;font-weight:600;text-align:center;margin-top:9px}
+.btn:active{background:var(--line)}
+.btn.primary{background:var(--text);color:#12151C;border-color:var(--text)}
+.btn.primary[disabled]{background:var(--surface);color:var(--dimmer);border-color:var(--line)}
+.btn.danger{color:var(--red)}
+.acts{display:flex;gap:9px;margin-top:16px}
+.acts .btn{margin-top:0}
+.hint{font-size:12px;color:var(--dimmer);margin-top:9px;line-height:1.5}
+.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv span:last-child{font-family:var(--mono);color:var(--dim)}
+.log{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:pre-wrap;
+  max-height:160px;overflow:auto;line-height:1.5;overflow-wrap:anywhere}
+
+/* ---- calendar ---- */
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:10px}
+.mhead .m{font-size:17px;font-weight:680;letter-spacing:-.01em}
+.mnav{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+.mnav button{height:34px;border-radius:10px;background:var(--surface);
+  border:1px solid var(--line);color:var(--dim)}
+.mnav .arw{width:34px;font-size:16px}
+.mnav .tdy{padding:0 12px;font-size:12px;font-weight:650;letter-spacing:.02em}
+.mnav button[disabled]{opacity:.3}
+.mnav button:not([disabled]):active{background:var(--line)}
+.wdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.wdays div{text-align:center;font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:7px}
+.cal .cell{aspect-ratio:1/1;border-radius:50%;background:var(--surface);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;
+  color:var(--dimmer);position:relative;transition:transform .08s ease}
+.cal .cell:active{transform:scale(.93)}
+.cal .pad{background:none;border:none}
+.cal .cell.g{background:var(--green);border-color:var(--green);color:#12151C;font-weight:600}
+.cal .cell.y{background:var(--yellow);border-color:var(--yellow);color:#12151C;font-weight:600}
+.cal .cell.r{background:var(--red);border-color:var(--red);color:#12151C;font-weight:600}
+.cal .cell.future{opacity:.28}
+.cal .cell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--dim)}
+.cal .cell .nt{position:absolute;bottom:6px;left:50%;margin-left:-2px;width:4px;height:4px;
+  border-radius:50%;background:rgba(18,21,28,.45)}
+.cal .cell.locked{opacity:.86}
+.legend{display:flex;gap:14px;margin-top:16px;flex-wrap:wrap}
+.legend div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+.legend i{width:9px;height:9px;border-radius:3px;display:block}
+
+/* ---- charts ---- */
+.rangebar{display:flex;gap:6px;margin-top:16px}
+.rangebar button{flex:1;padding:9px 0;border-radius:10px;background:var(--surface);
+  border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--dim)}
+.rangebar button.on{background:var(--surface2);border-color:var(--dim);color:var(--text)}
+.bigsplit{display:flex;height:15px;border-radius:8px;overflow:hidden;margin-top:14px;background:var(--surface2)}
+.bigsplit i{display:block;height:100%}
+.pcts{display:flex;gap:10px;margin-top:14px}
+.pct{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px}
+.pct .v{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1;color:var(--c)}
+.pct .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
+  font-weight:650;margin-top:6px}
+.pct .n{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:3px}
+.row{margin-top:15px}
+.row .rl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:6px}
+.row .rl b{font-weight:620} .row .rl span{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.track{display:flex;height:11px;border-radius:6px;overflow:hidden;background:var(--surface2)}
+.track i{display:block;height:100%}
+.rkey{display:flex;gap:12px;margin-top:9px;flex-wrap:wrap}
+.rkey div{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim)}
+.rkey i{width:8px;height:8px;border-radius:50%;display:block}
+.wbars{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:14px}
+.wbar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
+.wbar .stack{width:100%;border-radius:5px 5px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse}
+.wbar .stack i{display:block;width:100%}
+.wbar .wl{text-align:center;font-size:9px;color:var(--dimmer);font-weight:650;letter-spacing:.06em}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px}
+.stat .v{font-family:var(--mono);font-size:22px;font-weight:600;line-height:1}
+.stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
+  font-weight:650;margin-top:7px;line-height:1.4}
+
+/* ---- nav ---- */
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(18,21,28,.93);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);z-index:40;
+  padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
+nav button{flex:1;padding:13px 0 12px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:650;color:var(--dimmer)}
+nav button.on{color:var(--text)}
+nav button .ind{display:block;width:20px;height:2px;border-radius:2px;background:transparent;margin:0 auto 7px}
+nav button.on .ind{background:var(--text)}
+
+/* ---- sheet + toast ---- */
+.scrim{position:fixed;inset:0;background:rgba(8,10,14,.62);z-index:50;opacity:0;pointer-events:none;
+  transition:opacity .2s ease}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:max(0px,calc(50% - 215px));right:max(0px,calc(50% - 215px));bottom:0;z-index:60;
+  background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  padding:8px var(--pad) calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(102%);transition:transform .24s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow:auto}
+.sheet.open{transform:translateY(0)}
+.handle{width:36px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 15px}
+.sheet h2{margin:0 0 3px;font-size:19px;font-weight:680;letter-spacing:-.01em}
+.sheet .meta{font-size:12px;color:var(--dim);font-family:var(--mono);margin-bottom:4px;letter-spacing:.04em}
+.readout{margin-top:16px}
+.readout .big{display:flex;align-items:center;gap:11px}
+.readout .big i{width:16px;height:16px;border-radius:5px;background:var(--c);display:block}
+.readout .big b{font-size:17px;font-weight:650}
+.readout .note{margin-top:14px;font-size:14px;line-height:1.55;color:var(--text);
+  background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:12px;white-space:pre-wrap}
+.toast{position:fixed;left:max(12px,calc(50% - 203px));right:max(12px,calc(50% - 203px));
+  bottom:calc(84px + env(safe-area-inset-bottom));z-index:70;
+  background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:13px 15px;
+  display:flex;align-items:center;gap:12px;
+  transform:translateY(140%);opacity:0;transition:transform .26s cubic-bezier(.32,.72,0,1),opacity .2s}
+.toast.open{transform:translateY(0);opacity:1}
+.toast .txt{flex:1;font-size:14px;min-width:0}
+.toast .txt .tm{font-family:var(--mono);color:var(--dim);font-size:12px;display:block;margin-top:2px}
+.toast button{font-size:14px;font-weight:650;color:var(--text);flex:0 0 auto;
+  padding:8px 12px;background:var(--line);border-radius:9px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="name">Days</div>
+    <button class="who" id="gearBtn">DATA</button>
+  </div>
+  <div class="date" id="dateLine"></div>
+</header>
+
+<div id="banners"></div>
+<main id="view"></main>
+
+<nav>
+  <button data-tab="log" class="on"><span class="ind"></span>Log</button>
+  <button data-tab="history"><span class="ind"></span>History</button>
+  <button data-tab="charts"><span class="ind"></span>Charts</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const APP_VERSION = "1.0.1";
+const SCHEMA_VERSION = 1;
+const EDIT_WINDOW = 7;   /* days back you are allowed to fill in or change */
+
+const RATINGS = {
+  green:  {label:"Green",  sub:"Good",  hex:"#56A06B", cls:"g", score:2},
+  yellow: {label:"Yellow", sub:"Mixed", hex:"#E3A63F", cls:"y", score:1},
+  red:    {label:"Red",    sub:"Rough", hex:"#C4605A", cls:"r", score:0}
+};
+const RORDER = ["green","yellow","red"];
+
+const REASONS = {
+  me:     {label:"Me",        sub:"Something in me — mood, choices, headspace", hex:"#8A79C6"},
+  others: {label:"Others",    sub:"People around me",                          hex:"#5B8ED8"},
+  health: {label:"My health", sub:"Body, energy, sleep, pain",                 hex:"#4E9EA3"}
+};
+const XORDER = ["me","others","health"];
+
+/* ================= storage ================= */
+const ERRORS = [];
+function logErr(where, e){
+  const m = "[" + new Date().toLocaleTimeString() + "] " + where + ": " + (e && e.message ? e.message : e);
+  ERRORS.push(m); console.error(m);
+}
+let memoryOnly = false;
+const LS_KEY = "days.entries.v1", LS_META = "days.meta.v1";
+
+function lsGet(k, fb){
+  try { const v = localStorage.getItem(k); return v == null ? fb : JSON.parse(v); }
+  catch(e){ logErr("read " + k, e); return fb; }
+}
+function lsSet(k, v){
+  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ logErr("write " + k, e); memoryOnly = true; return false; }
+}
+
+let entries = [];                       /* one object per calendar day */
+let meta = {lastBackup:null};
+let index = new Map();                  /* date -> entry */
+
+let idb = null;
+function openIDB(){
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open("dayTracker", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
+      r.onsuccess = () => { idb = r.result; res(); };
+      r.onerror = () => { logErr("idb open", r.error); res(); };
+    } catch(e){ logErr("idb", e); res(); }
+  });
+}
+function idbPut(k, v){
+  if(!idb) return;
+  try { idb.transaction("kv","readwrite").objectStore("kv").put(v, k); }
+  catch(e){ logErr("idb put", e); }
+}
+function idbGet(k){
+  return new Promise(res => {
+    if(!idb) return res(null);
+    try {
+      const r = idb.transaction("kv","readonly").objectStore("kv").get(k);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    } catch(e){ logErr("idb get", e); res(null); }
+  });
+}
+
+function reindex(){
+  index = new Map();
+  entries.forEach(e => { if(!e.deleted_at) index.set(e.date, e); });
+}
+function save(){
+  entries = mergeSets(entries, []);   /* one row per date, newest wins */
+  reindex();
+  lsSet(LS_KEY, entries); lsSet(LS_META, meta);
+  idbPut("entries", entries); idbPut("meta", meta);
+}
+async function load(){
+  await openIDB();
+  const a = lsGet(LS_KEY, null);
+  const b = await idbGet("entries");
+  entries = mergeSets(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []);
+  const ma = lsGet(LS_META, null), mb = await idbGet("meta");
+  meta = Object.assign({lastBackup:null}, mb || {}, ma || {});
+  if(a === null && b === null){
+    try { localStorage.setItem("days.test","1"); localStorage.removeItem("days.test"); }
+    catch(e){ memoryOnly = true; logErr("storage unavailable", e); }
+  }
+  reindex();
+}
+/* merge by date, newest updated_at wins — lets two backups combine cleanly */
+function mergeSets(x, y){
+  const m = new Map();
+  x.concat(y).forEach(e => {
+    if(!e || !e.date) return;
+    const p = m.get(e.date);
+    if(!p || (e.updated_at || "") > (p.updated_at || "")) m.set(e.date, e);
+  });
+  return Array.from(m.values()).sort((a,b) => b.date.localeCompare(a.date));
+}
+
+/* ================= date helpers ================= */
+const p2 = n => String(n).padStart(2,"0");
+function keyOf(d){ return d.getFullYear() + "-" + p2(d.getMonth()+1) + "-" + p2(d.getDate()); }
+function dateOf(k){ const [y,m,d] = k.split("-").map(Number); return new Date(y, m-1, d); }
+const todayKey = () => keyOf(new Date());
+function shiftKey(k, n){ const d = dateOf(k); d.setDate(d.getDate()+n); return keyOf(d); }
+function agoOf(k){ return Math.round((dateOf(todayKey()) - dateOf(k)) / 86400000); }
+function editable(k){ const a = agoOf(k); return a >= 0 && a <= EDIT_WINDOW; }
+function fmtDay(k){
+  if(k === todayKey()) return "Today";
+  if(k === shiftKey(todayKey(), -1)) return "Yesterday";
+  return dateOf(k).toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"});
+}
+function fmtShort(k){ return dateOf(k).toLocaleDateString([], {weekday:"short", month:"short", day:"numeric"}); }
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function daysSince(iso){ return iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null; }
+function buzz(){ try { navigator.vibrate && navigator.vibrate(8); } catch(e){} }
+const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+/* ================= writing ================= */
+function putDay(date, rating, reason, note){
+  const now = new Date().toISOString();
+  const old = entries.find(e => e.date === date);   /* tombstones included, so re-logging revives */
+  if(old){
+    old.rating = rating; old.reason = reason; old.note = note || "";
+    old.updated_at = now; old.deleted_at = null;
+  } else {
+    entries.push({date:date, rating:rating, reason:reason, note:note || "",
+      created_at:now, updated_at:now, deleted_at:null, schema_version:SCHEMA_VERSION});
+  }
+  save();
+}
+function clearDay(date){
+  const old = index.get(date);
+  if(!old) return;
+  old.deleted_at = new Date().toISOString();
+  old.updated_at = old.deleted_at;
+  save();
+}
+
+/* ================= chrome ================= */
+let tab = "log";
+const view = document.getElementById("view");
+
+function renderHeader(){
+  document.getElementById("dateLine").textContent =
+    new Date().toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"}).toUpperCase();
+}
+function renderBanners(){
+  const b = [];
+  if(memoryOnly)
+    b.push('<div class="banner"><span><b>Storage is blocked.</b> Nothing you enter will survive closing the app. Open it from the Home Screen icon, not a private tab.</span></div>');
+  const since = daysSince(meta.lastBackup);
+  if(entries.length && (since === null || since >= 7))
+    b.push('<div class="banner"><span><b>' +
+      (since === null ? "No backup yet." : "Last backup was " + since + " days ago.") +
+      '</b> Export one and drop it in iCloud Drive.</span><button onclick="dataSheet()">Back up</button></div>');
+  document.getElementById("banners").innerHTML = b.join("");
+}
+
+/* ================= LOG TAB ================= */
+let logDate = todayKey();
+let draft = {rating:null, reason:null, note:""};
+
+function loadDraft(){
+  const e = index.get(logDate);
+  draft = e ? {rating:e.rating, reason:e.reason, note:e.note || ""} : {rating:null, reason:null, note:""};
+}
+function ratesHTML(sel, tight){
+  return '<div class="rates' + (tight ? " tight" : "") + '">' + RORDER.map(r =>
+    '<button class="rate' + (sel === r ? " on" : "") + '" data-r="' + r + '"' +
+      ' style="--c:' + RATINGS[r].hex + '">' +
+      '<span class="swatch"></span>' +
+      '<span><span class="lbl">' + RATINGS[r].label + '</span>' +
+      '<span class="sub">' + RATINGS[r].sub + '</span></span></button>').join("") + '</div>';
+}
+function chipsHTML(sel, enabled, tight){
+  return '<div class="chips' + (tight ? " tight" : "") + (enabled ? "" : " off") + '">' +
+    XORDER.map(x =>
+      '<button class="chip' + (sel === x ? " on" : "") + '" data-x="' + x + '"' +
+        ' style="--c:' + REASONS[x].hex + '">' +
+        '<span class="dot"></span><span class="t"><b>' + REASONS[x].label + '</b>' +
+        '<i>' + REASONS[x].sub + '</i></span></button>').join("") + '</div>';
+}
+
+function renderLog(){
+  let sel = '<div class="dsel">';
+  for(let i = EDIT_WINDOW; i >= 0; i--){
+    const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
+    sel += '<button data-d="' + k + '"' + (k === logDate ? ' class="on"' : '') + '>' +
+      '<span class="wd">' + "SMTWTFS"[d.getDay()] + '</span>' +
+      '<span class="dn">' + d.getDate() + '</span>' +
+      '<span class="pip ' + (e ? RATINGS[e.rating].cls : "") + '"></span></button>';
+  }
+  sel += '</div>';
+
+  const existing = index.get(logDate);
+  const tiles = ratesHTML(draft.rating, false);
+  const chips = chipsHTML(draft.reason, !!draft.rating, false);
+  const ready = draft.rating && draft.reason;
+  view.innerHTML = sel +
+    '<div class="picked">' + fmtDay(logDate) +
+      '<span>' + (existing ? "ALREADY LOGGED · EDITING" : "NOT LOGGED YET") + '</span></div>' +
+    tiles +
+    '<label style="margin-top:22px">What drove it</label>' + chips +
+    '<label for="nt">Comment (optional)</label>' +
+    '<textarea id="nt" placeholder="Anything worth remembering about this day">' + esc(draft.note) + '</textarea>' +
+    '<button class="btn primary" id="sv"' + (ready ? "" : " disabled") + '>' +
+      (existing ? "Update this day" : "Save this day") + '</button>' +
+    (existing ? '<button class="btn danger" id="rm">Remove this entry</button>' : '') +
+    '<div class="hint">You can fill in or change any of the last ' + EDIT_WINDOW +
+      ' days. Older days are locked so the history stays honest.</div>';
+
+  view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => {
+    logDate = b.dataset.d; loadDraft(); renderLog();
+  });
+  view.querySelectorAll(".rate").forEach(b => b.onclick = () => {
+    buzz(); draft.note = document.getElementById("nt").value;
+    draft.rating = (draft.rating === b.dataset.r) ? null : b.dataset.r; renderLog();
+  });
+  view.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    buzz(); draft.note = document.getElementById("nt").value;
+    draft.reason = (draft.reason === b.dataset.x) ? null : b.dataset.x; renderLog();
+  });
+  document.getElementById("nt").addEventListener("input", ev => { draft.note = ev.target.value; });
+  document.getElementById("sv").onclick = () => {
+    if(!draft.rating || !draft.reason) return;
+    putDay(logDate, draft.rating, draft.reason, document.getElementById("nt").value);
+    buzz(); renderHeader(); renderBanners(); renderLog();
+    toast(fmtDay(logDate) + " saved",
+      RATINGS[draft.rating].label + " · " + REASONS[draft.reason].label);
+  };
+  const rm = document.getElementById("rm");
+  if(rm) rm.onclick = () => {
+    if(!confirm("Remove the entry for " + fmtDay(logDate) + "?")) return;
+    clearDay(logDate); loadDraft(); renderHeader(); renderBanners(); renderLog();
+    toast("Entry removed", fmtShort(logDate));
+  };
+}
+
+/* ================= HISTORY TAB ================= */
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+
+function renderHistory(){
+  const first = new Date(calY, calM, 1);
+  const pad = first.getDay();
+  const dim = new Date(calY, calM+1, 0).getDate();
+  const now = new Date(), atNow = (calY === now.getFullYear() && calM === now.getMonth());
+
+  let cells = "";
+  for(let i = 0; i < pad; i++) cells += '<div class="pad"></div>';
+  const counts = {green:0, yellow:0, red:0}; let logged = 0, elapsed = 0;
+  for(let d = 1; d <= dim; d++){
+    const k = keyOf(new Date(calY, calM, d));
+    const e = index.get(k), future = agoOf(k) < 0;
+    if(!future) elapsed++;
+    if(e){ counts[e.rating]++; logged++; }
+    cells += '<button class="cell ' + (e ? RATINGS[e.rating].cls : "") +
+      (future ? " future" : "") + (k === todayKey() ? " today" : "") +
+      (!editable(k) && !future ? " locked" : "") + '" data-d="' + k + '"' +
+      (future ? " disabled" : "") + '>' + d +
+      (e && e.note ? '<span class="nt"></span>' : '') + '</button>';
+  }
+
+  view.innerHTML =
+    '<div class="mhead">' +
+      '<div class="m">' + first.toLocaleDateString([], {month:"long", year:"numeric"}) + '</div>' +
+      '<div class="mnav">' +
+        '<button class="tdy" id="td"' + (atNow ? " disabled" : "") + '>Today</button>' +
+        '<button class="arw" id="pm">&lsaquo;</button>' +
+        '<button class="arw" id="nm"' + (atNow ? " disabled" : "") + '>&rsaquo;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="wdays"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>' +
+    '<div class="cal">' + cells + '</div>' +
+    '<div class="legend">' +
+      RORDER.map(r => '<div><i style="border-radius:50%;background:' + RATINGS[r].hex + '"></i>' + RATINGS[r].label + '</div>').join("") +
+      '<div><i style="border-radius:50%;background:var(--surface);border:1px solid var(--line)"></i>Not logged</div>' +
+    '</div>' +
+    '<div class="sec"><div class="sechead"><div class="eyebrow">This month</div>' +
+      '<div class="eyebrow">' + logged + ' of ' + elapsed + ' days logged</div></div>' +
+      (logged ? splitBar(counts, logged) + pctCards(counts, logged)
+              : '<div class="empty">Nothing logged this month yet.</div>') +
+    '</div>' +
+    '<div class="hint" style="margin-top:18px">Tap a day to see it. The last ' + EDIT_WINDOW +
+      ' days can still be changed right there.</div>';
+
+  document.getElementById("pm").onclick = () => {
+    calM--; if(calM < 0){ calM = 11; calY--; } renderHistory();
+  };
+  document.getElementById("nm").onclick = () => {
+    if(atNow) return;
+    calM++; if(calM > 11){ calM = 0; calY++; } renderHistory();
+  };
+  document.getElementById("td").onclick = () => {
+    if(atNow) return;
+    const n = new Date(); calY = n.getFullYear(); calM = n.getMonth(); renderHistory();
+  };
+  view.querySelectorAll(".cal .cell").forEach(b => {
+    if(!b.disabled) b.onclick = () => daySheet(b.dataset.d);
+  });
+}
+
+let sheetKey = null, sheetDraft = null;
+
+function daySheet(k){
+  sheetKey = k;
+  const e = index.get(k);
+  sheetDraft = e ? {rating:e.rating, reason:e.reason, note:e.note || ""}
+                 : {rating:null, reason:null, note:""};
+  openSheet(daySheetHTML());
+  bindDaySheet();
+}
+function paintDaySheet(){
+  sheet.innerHTML = '<div class="handle"></div>' + daySheetHTML();
+  bindDaySheet();
+}
+function daySheetHTML(){
+  const k = sheetKey, e = index.get(k);
+  const head = '<h2>' + fmtDay(k) + '</h2><div class="meta">' +
+    (agoOf(k) <= 1
+      ? dateOf(k).toLocaleDateString([], {month:"long", day:"numeric", year:"numeric"}).toUpperCase()
+      : agoOf(k) + " DAYS AGO") + '</div>';
+
+  if(!editable(k)){
+    return head + (e
+      ? '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
+          '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
+          '<span style="color:var(--dim);font-size:14px">because of ' +
+            REASONS[e.reason].label.toLowerCase() + '</span></div>' +
+          (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '') + '</div>'
+      : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing was logged for this day.</div></div>') +
+      '<div class="hint">Locked — more than ' + EDIT_WINDOW + ' days ago.</div>' +
+      '<button class="btn" onclick="closeSheet()">Close</button>';
+  }
+
+  const ready = sheetDraft.rating && sheetDraft.reason;
+  return head +
+    '<div style="height:14px"></div>' +
+    ratesHTML(sheetDraft.rating, true) +
+    '<label>What drove it</label>' + chipsHTML(sheetDraft.reason, !!sheetDraft.rating, true) +
+    '<label for="snt">Comment (optional)</label>' +
+    '<textarea id="snt" placeholder="Anything worth remembering about this day">' +
+      esc(sheetDraft.note) + '</textarea>' +
+    '<button class="btn primary" id="ssv"' + (ready ? "" : " disabled") + '>' +
+      (e ? "Update this day" : "Save this day") + '</button>' +
+    (e ? '<button class="btn danger" id="srm">Remove this entry</button>' : '') +
+    '<button class="btn" onclick="closeSheet()">Close</button>';
+}
+function bindDaySheet(){
+  const nt = document.getElementById("snt");
+  if(!nt) return;                       /* locked day — read-only, nothing to bind */
+  nt.addEventListener("input", ev => { sheetDraft.note = ev.target.value; });
+  sheet.querySelectorAll(".rate").forEach(b => b.onclick = () => {
+    buzz(); sheetDraft.note = nt.value;
+    sheetDraft.rating = (sheetDraft.rating === b.dataset.r) ? null : b.dataset.r;
+    paintDaySheet();
+  });
+  sheet.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    buzz(); sheetDraft.note = nt.value;
+    sheetDraft.reason = (sheetDraft.reason === b.dataset.x) ? null : b.dataset.x;
+    paintDaySheet();
+  });
+  document.getElementById("ssv").onclick = () => {
+    if(!sheetDraft.rating || !sheetDraft.reason) return;
+    putDay(sheetKey, sheetDraft.rating, sheetDraft.reason, nt.value);
+    buzz(); afterSheetWrite(fmtDay(sheetKey) + " saved",
+      RATINGS[sheetDraft.rating].label + " · " + REASONS[sheetDraft.reason].label);
+  };
+  const rm = document.getElementById("srm");
+  if(rm) rm.onclick = () => {
+    if(!confirm("Remove the entry for " + fmtDay(sheetKey) + "?")) return;
+    clearDay(sheetKey); afterSheetWrite("Entry removed", fmtShort(sheetKey));
+  };
+}
+function afterSheetWrite(msg, sub){
+  closeSheet();
+  if(sheetKey === logDate) loadDraft();
+  renderHeader(); renderBanners(); RENDER[tab]();
+  toast(msg, sub);
+}
+
+/* ================= CHARTS TAB ================= */
+const RANGES = [{k:"30", label:"30 days", days:30}, {k:"90", label:"90 days", days:90},
+                {k:"365", label:"1 year", days:365}, {k:"all", label:"All", days:null}];
+let range = "30";
+
+function inRange(){
+  const r = RANGES.find(x => x.k === range);
+  const all = entries.filter(e => !e.deleted_at);
+  if(!r.days) return all;
+  const cut = shiftKey(todayKey(), -(r.days - 1));
+  return all.filter(e => e.date >= cut);
+}
+function splitBar(counts, total){
+  return '<div class="bigsplit">' + RORDER.map(r =>
+    '<i style="width:' + (total ? counts[r] / total * 100 : 0) + '%;background:' + RATINGS[r].hex + '"></i>'
+  ).join("") + '</div>';
+}
+function pctCards(counts, total){
+  return '<div class="pcts">' + RORDER.map(r =>
+    '<div class="pct" style="--c:' + RATINGS[r].hex + '">' +
+      '<div class="v">' + pct(counts[r], total) + '%</div>' +
+      '<div class="k">' + RATINGS[r].label + '</div>' +
+      '<div class="n">' + counts[r] + ' ' + (counts[r] === 1 ? "day" : "days") + '</div></div>'
+  ).join("") + '</div>';
+}
+function trackRow(title, right, parts, keyDefs, total){
+  return '<div class="row"><div class="rl"><b>' + title + '</b><span>' + right + '</span></div>' +
+    '<div class="track">' + keyDefs.map(d =>
+      '<i style="width:' + (total ? parts[d.k] / total * 100 : 0) + '%;background:' + d.hex + '"></i>'
+    ).join("") + '</div></div>';
+}
+function reasonKey(){
+  return '<div class="rkey">' + XORDER.map(x =>
+    '<div><i style="background:' + REASONS[x].hex + '"></i>' + REASONS[x].label + '</div>').join("") + '</div>';
+}
+function ratingKey(){
+  return '<div class="rkey">' + RORDER.map(r =>
+    '<div><i style="background:' + RATINGS[r].hex + '"></i>' + RATINGS[r].label + '</div>').join("") + '</div>';
+}
+
+function renderCharts(){
+  const rows = inRange();
+  const total = rows.length;
+  const bar = '<div class="rangebar">' + RANGES.map(r =>
+    '<button data-k="' + r.k + '"' + (range === r.k ? ' class="on"' : '') + '>' + r.label + '</button>').join("") + '</div>';
+
+  if(!total){
+    view.innerHTML = bar + '<div class="empty">Nothing logged in this range yet.<br>Log a few days and the picture shows up here.</div>';
+    view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });
+    return;
+  }
+
+  const counts = {green:0, yellow:0, red:0};
+  const rCounts = {me:0, others:0, health:0};
+  const byRating = {green:{me:0,others:0,health:0}, yellow:{me:0,others:0,health:0}, red:{me:0,others:0,health:0}};
+  const byReason = {me:{green:0,yellow:0,red:0}, others:{green:0,yellow:0,red:0}, health:{green:0,yellow:0,red:0}};
+  const wd = [0,1,2,3,4,5,6].map(() => ({green:0,yellow:0,red:0,n:0}));
+  rows.forEach(e => {
+    counts[e.rating]++; rCounts[e.reason]++;
+    byRating[e.rating][e.reason]++; byReason[e.reason][e.rating]++;
+    const w = wd[dateOf(e.date).getDay()];
+    w[e.rating]++; w.n++;
+  });
+
+  const rdefs = XORDER.map(x => ({k:x, hex:REASONS[x].hex}));
+  const cdefs = RORDER.map(r => ({k:r, hex:RATINGS[r].hex}));
+
+  /* streaks over the whole log, not just the range */
+  const all = entries.filter(e => !e.deleted_at).slice().sort((a,b) => a.date.localeCompare(b.date));
+  let best = 0, run = 0, prev = null;
+  all.forEach(e => {
+    run = (e.rating === "green" && prev && e.date === shiftKey(prev, 1)) ? run + 1
+        : (e.rating === "green" ? 1 : 0);
+    if(run > best) best = run;
+    prev = e.date;
+  });
+  let cur = 0, walk = index.has(todayKey()) ? todayKey() : shiftKey(todayKey(), -1);
+  while(true){
+    const e = index.get(walk);
+    if(!e || e.rating !== "green") break;
+    cur++; walk = shiftKey(walk, -1);
+  }
+  const span = RANGES.find(x => x.k === range).days ||
+    (all.length ? Math.round((dateOf(todayKey()) - dateOf(all[0].date)) / 86400000) + 1 : 0);
+  const wdMax = Math.max(1, ...wd.map(w => w.n));
+  const topReason = XORDER.slice().sort((a,b) => rCounts[b] - rCounts[a])[0];
+  const greenTop = XORDER.slice().sort((a,b) => byRating.green[b] - byRating.green[a])[0];
+  const redTop = XORDER.slice().sort((a,b) => byRating.red[b] - byRating.red[a])[0];
+
+  view.innerHTML = bar +
+    '<div class="sec"><div class="sechead"><div class="eyebrow">Day mix</div>' +
+      '<div class="eyebrow">' + total + ' logged</div></div>' +
+      splitBar(counts, total) + pctCards(counts, total) + '</div>' +
+
+    '<div class="sec"><div class="sechead"><div class="eyebrow">Behind each colour</div></div>' +
+      '<div class="card">' +
+      RORDER.map(r => counts[r]
+        ? trackRow(RATINGS[r].label + " days", counts[r] + " · mostly " +
+            REASONS[XORDER.slice().sort((a,b) => byRating[r][b] - byRating[r][a])[0]].label.toLowerCase(),
+            byRating[r], rdefs, counts[r])
+        : trackRow(RATINGS[r].label + " days", "none", byRating[r], rdefs, 0)).join("") +
+      reasonKey() + '</div></div>' +
+
+    '<div class="sec"><div class="sechead"><div class="eyebrow">Each reason&rsquo;s record</div></div>' +
+      '<div class="card">' +
+      XORDER.map(x => trackRow(REASONS[x].label,
+        rCounts[x] ? rCounts[x] + " days · " + pct(byReason[x].green, rCounts[x]) + "% green" : "none",
+        byReason[x], cdefs, rCounts[x])).join("") +
+      ratingKey() + '</div></div>' +
+
+    '<div class="sec"><div class="sechead"><div class="eyebrow">By day of week</div></div>' +
+      '<div class="card"><div class="wbars">' +
+      wd.map((w, i) => '<div class="wbar"><div class="stack" style="height:' + (w.n / wdMax * 100) + '%">' +
+        RORDER.map(r => '<i style="height:' + (w.n ? w[r] / w.n * 100 : 0) + '%;background:' + RATINGS[r].hex + '"></i>').join("") +
+        '</div><div class="wl">' + "SMTWTFS"[i] + '</div></div>').join("") +
+      '</div><p style="margin-top:12px">Bar height is how many of that weekday you logged; the colours are how they went.</p></div></div>' +
+
+    '<div class="sec"><div class="sechead"><div class="eyebrow">Numbers</div></div>' +
+      '<div class="stats">' +
+      '<div class="stat"><div class="v" style="color:var(--green)">' + cur + '</div>' +
+        '<div class="k">Green streak now</div></div>' +
+      '<div class="stat"><div class="v" style="color:var(--green)">' + best + '</div>' +
+        '<div class="k">Longest green streak</div></div>' +
+      '<div class="stat"><div class="v">' + pct(total, span) + '%</div>' +
+        '<div class="k">Days logged in range</div></div>' +
+      '<div class="stat"><div class="v">' + all.length + '</div>' +
+        '<div class="k">Days on record</div></div>' +
+      '</div></div>' +
+
+    '<div class="sec"><div class="card"><h3>The short version</h3><p>' +
+      'Over ' + (RANGES.find(x => x.k === range).days ? "the last " + RANGES.find(x => x.k === range).label : "everything logged") +
+      ', <b>' + pct(counts.green, total) + '%</b> of your days came out green. ' +
+      REASONS[topReason].label + ' is the reason you point at most often (' +
+      pct(rCounts[topReason], total) + '% of days). ' +
+      (counts.green ? "Green days are usually down to " + REASONS[greenTop].label.toLowerCase() + ". " : "") +
+      (counts.red ? "Red days are usually down to " + REASONS[redTop].label.toLowerCase() + "." : "No red days in this range.") +
+      '</p></div></div>';
+
+  view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });
+}
+
+/* ================= nav ================= */
+const RENDER = {log:renderLog, history:renderHistory, charts:renderCharts};
+function go(t){
+  tab = t;
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  renderHeader(); renderBanners(); RENDER[t]();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => go(b.dataset.tab)));
+
+/* ================= toast + sheet ================= */
+let toastT = null;
+function toast(msg, sub, actionLabel, fn){
+  const el = document.getElementById("toast");
+  el.innerHTML = '<span class="txt">' + esc(msg) + '<span class="tm">' + esc(sub) + '</span></span>' +
+    (actionLabel ? '<button id="tact">' + esc(actionLabel) + '</button>' : "");
+  if(actionLabel) document.getElementById("tact").onclick = () => { hideToast(); fn(); };
+  el.classList.add("open");
+  clearTimeout(toastT); toastT = setTimeout(hideToast, 4200);
+}
+function hideToast(){ document.getElementById("toast").classList.remove("open"); }
+
+const scrim = document.getElementById("scrim"), sheet = document.getElementById("sheet");
+scrim.addEventListener("click", closeSheet);
+function openSheet(html){
+  sheet.innerHTML = '<div class="handle"></div>' + html;
+  scrim.classList.add("open"); sheet.classList.add("open");
+}
+function closeSheet(){
+  scrim.classList.remove("open"); sheet.classList.remove("open");
+  setTimeout(() => { if(!sheet.classList.contains("open")) sheet.innerHTML = ""; }, 260);
+}
+
+/* ================= data sheet ================= */
+function dataSheet(){
+  const since = daysSince(meta.lastBackup);
+  openSheet(
+    '<h2>Data</h2><div class="meta">EVERYTHING LIVES ON THIS DEVICE</div>' +
+    '<div class="card" style="margin-top:16px">' +
+      '<div class="kv"><span>Days on record</span><span>' + entries.filter(e => !e.deleted_at).length + '</span></div>' +
+      '<div class="kv"><span>Last backup</span><span>' +
+        (meta.lastBackup ? (since === 0 ? "today" : since + "d ago") : "never") + '</span></div>' +
+      '<div class="kv"><span>Version</span><span>' + APP_VERSION + '</span></div>' +
+    '</div>' +
+    '<button class="btn primary" onclick="exportJSON()">Export backup file</button>' +
+    '<button class="btn" onclick="exportCSV()">Export spreadsheet (CSV)</button>' +
+    '<label for="imp">Restore from backup</label>' +
+    '<input type="file" id="imp" accept="application/json,.json">' +
+    '<div class="hint">Restoring merges by date. Nothing already logged is lost — the newer version of a day wins.</div>' +
+    '<button class="btn" onclick="forceUpdate()">Check for update</button>' +
+    (ERRORS.length ? '<label>Errors</label><div class="log">' + esc(ERRORS.join("\n")) + '</div>' : '') +
+    '<button class="btn" onclick="closeSheet()">Close</button>');
+  document.getElementById("imp").addEventListener("change", importJSON);
+}
+document.getElementById("gearBtn").addEventListener("click", dataSheet);
+
+/* ================= export / import ================= */
+function download(name, text, mime){
+  try {
+    const blob = new Blob([text], {type: mime});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch(err){ logErr("download", err); alert("Export failed. Check the Errors list."); }
+}
+const stamp = () => new Date().toISOString().slice(0,10);
+
+function exportJSON(){
+  const payload = {app:"days-tracker", schema_version:SCHEMA_VERSION, app_version:APP_VERSION,
+    exported_at:new Date().toISOString(), entries:entries};
+  download("days-backup-" + stamp() + ".json", JSON.stringify(payload, null, 2), "application/json");
+  meta.lastBackup = new Date().toISOString(); save(); renderBanners(); dataSheet();
+}
+function exportCSV(){
+  const head = ["date","weekday","rating","reason","comment","created_at","updated_at"];
+  const q = s => '"' + String(s == null ? "" : s).replace(/"/g,'""') + '"';
+  const rows = entries.filter(e => !e.deleted_at).slice().sort((a,b) => a.date.localeCompare(b.date)).map(e => [
+    e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"}), e.rating, e.reason, e.note,
+    e.created_at, e.updated_at
+  ].map(q).join(","));
+  download("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv");
+}
+function importJSON(ev){
+  const f = ev.target.files && ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      const incoming = Array.isArray(d) ? d : d.entries;
+      if(!Array.isArray(incoming)) throw new Error("No entries found in that file.");
+      const before = entries.length;
+      entries = mergeSets(entries, incoming);
+      save(); loadDraft(); renderHeader(); renderBanners();
+      alert("Restored. " + (entries.length - before) + " new days added, " + entries.length + " total.");
+      closeSheet(); go(tab);
+    } catch(e){ logErr("import", e); alert("Could not read that file: " + e.message); }
+    ev.target.value = "";
+  };
+  r.readAsText(f);
+}
+function forceUpdate(){
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.getRegistrations().then(rs => {
+      Promise.all(rs.map(r => r.unregister())).then(() => location.reload(true));
+    }).catch(() => location.reload(true));
+  } else location.reload(true);
+}
+
+/* ================= boot ================= */
+window.addEventListener("error", ev => logErr("uncaught", ev.error || ev.message));
+document.addEventListener("visibilitychange", () => {
+  /* midnight rollover while the app sat open */
+  if(!document.hidden && logDate !== todayKey() && agoOf(logDate) < 0){ logDate = todayKey(); loadDraft(); }
+  if(!document.hidden && tab === "log") renderLog();
+});
+load().then(() => {
+  loadDraft();
+  go("log");
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(e => logErr("sw", e));
+  }
+});
+</script>
+</body>
+</html>
