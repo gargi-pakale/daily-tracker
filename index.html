@@ -229,12 +229,17 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 /* ---- nav ---- */
 nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
+/* Sized to match the Ted tracker's bar exactly: 13/12 padding, the active
+   indicator in flow above the label, and the full home-indicator inset rather
+   than a capped one. 46px of chrome plus the inset — about 80px on a phone.
+   The inset stays inside the button rather than under it, as it is here, so
+   the whole bar is tap area; that is invisible and strictly better. */
 nav button{position:relative;flex:1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  font-weight:650;color:var(--dimmer);line-height:1.1;
-  padding:8px 0 calc(7px + clamp(0px, env(safe-area-inset-bottom), 6px))}
+  font-weight:650;color:var(--dimmer);
+  padding:13px 0 calc(12px + env(safe-area-inset-bottom))}
 nav button.on{color:var(--text)}
-nav button .ind{position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:18px;height:2px;border-radius:0 0 2px 2px;background:transparent}
+nav button .ind{display:block;width:20px;height:2px;border-radius:2px;
+  background:transparent;margin:0 auto 7px}
 nav button.on .ind{background:var(--text)}
 
 /* ---- sheet + toast ---- */
