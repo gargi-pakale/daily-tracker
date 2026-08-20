@@ -324,7 +324,7 @@ const isGood = r => r === "green" || r === "xgreen";
    charts and the backup file. Everything that differs between them lives here. */
 const TRACKERS = {
   days: {
-    label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:3,
+    label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:7, change:7,
     prompt:"What drove it",
     placeholder:"Anything worth remembering about this day",
     mix:"Day mix",
@@ -342,7 +342,7 @@ const TRACKERS = {
     }
   },
   sleep: {
-    label:"Sleep", noun:"night", nounPl:"nights", every:"every night", backfill:3,
+    label:"Sleep", noun:"night", nounPl:"nights", every:"every night", backfill:3, change:1,
     prompt:"What drove the night",
     placeholder:"Anything worth remembering about this night",
     mix:"Night mix",
@@ -485,10 +485,17 @@ function agoOf(k){ return Math.round((dateOf(todayKey()) - dateOf(k)) / 86400000
    describes is today — once that day is over the entry stands. Together they
    mean a backfilled date locks the moment it is saved. */
 const backfillDays = () => T().backfill;
-const inWindow  = k => { const a = agoOf(k); return a >= 0 && a <= backfillDays() - 1; };
-const canEnter  = k => inWindow(k) && !index.has(k);
-const canChange = k => k === todayKey() && index.has(k);
+const changeDays   = () => T().change;
+const within    = (k, n) => { const a = agoOf(k); return a >= 0 && a <= n - 1; };
+const canEnter  = k => within(k, backfillDays()) && !index.has(k);
+const canChange = k => within(k, changeDays()) && index.has(k);
 const editable  = k => canEnter(k) || canChange(k);
+/* The two trackers word the same lock differently because they enforce it
+   differently: sleep closes at midnight, days closes at the end of the week. */
+const sameDayOnly = () => changeDays() === 1;
+const lockLine = () => sameDayOnly()
+  ? 'A ' + T().noun + ' can only be changed on the day it belongs to — after that it stands.'
+  : 'It is outside the last ' + changeDays() + ' days, so it stands.';
 function fmtDay(k){
   if(k === todayKey()) return "Today";
   if(k === shiftKey(todayKey(), -1)) return "Yesterday";
@@ -653,8 +660,7 @@ function renderLog(){
       readoutHTML(existing) +
       (mayChange
         ? '<button class="btn" id="chg">Change this ' + T().noun + '</button>'
-        : '<div class="hint">Locked. A ' + T().noun + ' can only be changed on the ' +
-            'day it belongs to — after that it stands.</div>');
+        : '<div class="hint">Locked. ' + lockLine() + '</div>');
     view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
     const chg = view.querySelector("#chg");
     if(chg) chg.onclick = () => { logEditing = true; renderLog(); };
@@ -686,10 +692,13 @@ function renderLog(){
       (existing ? "Update this " + T().noun : "Save this " + T().noun) + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
-    '<div class="hint">You can fill in today and the ' + (backfillDays() - 1) + ' ' +
-      (backfillDays() === 2 ? T().noun : T().nounPl) + ' before it. Once saved, a ' + T().noun +
-      ' can only be changed on the day it belongs to — after that it stands, ' +
-      'so the history stays honest.' +
+    '<div class="hint">' + (sameDayOnly()
+      ? 'You can fill in today and the ' + (backfillDays() - 1) + ' ' +
+        (backfillDays() === 2 ? T().noun : T().nounPl) + ' before it. Once saved, a ' +
+        T().noun + ' can only be changed on the day it belongs to — after that it stands, ' +
+        'so the history stays honest.'
+      : 'Tap any day in the strip above to fill in or change it. Anything older than these ' +
+        changeDays() + ' days is locked, so the history stays honest.') +
       (T().hint ? '<br>' + T().hint : '') + '</div>';
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
@@ -706,7 +715,7 @@ function renderLog(){
     if(!draft.rating || !draft.reason) return;
     /* backfilling is a one-shot: the day it describes has already passed, so it
        is locked the instant it is written */
-    if(logDate !== todayKey() &&
+    if(!within(logDate, changeDays()) &&
        !confirm(fmtDay(logDate) + " is already past, so this locks as soon as you save it " +
                 "and cannot be changed afterwards.\n\nSave it?")) return;
     if(!putDay(logDate, draft.rating, draft.reason, view.querySelector("#nt").value)) return;
@@ -833,7 +842,7 @@ function daySheet(k){
   body += '<div class="hint">' + (
       canChange(k) ? 'To change this, open it on the Log tab.'
     : canEnter(k)  ? 'Not logged yet — you can still fill it in on the Log tab.'
-    : e            ? 'Locked — only changeable on the day it belongs to.'
+    : e            ? 'Locked. ' + lockLine()
     :                'Closed — outside the last ' + backfillDays() + ' ' + T().nounPl + '.') + '</div>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
 

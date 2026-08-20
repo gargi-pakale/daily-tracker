@@ -19,28 +19,33 @@ The two share the five colours, the seven-day editing window, the calendar, the
 charts and the backup file, and nothing else. A day and a night on the same date
 are separate entries and never overwrite each other.
 
-Three tabs, and they follow whichever tracker is selected: **Log** (today and
-the two days before it, with the week shown as a colour run), **History** (a
-read-only month calendar painted by colour), **Charts** (the split, what sits
-behind each colour, how each reason tends to turn out, weekday patterns,
-streaks).
+Three tabs, and they follow whichever tracker is selected: **Log** (the week
+shown as a colour run, with the open days tappable), **History** (a read-only
+month calendar painted by colour), **Charts** (the split, what sits behind each
+colour, how each reason tends to turn out, weekday patterns, streaks).
 
 ## What can be changed, and when
 
-Two rules, and a date can satisfy at most one of them:
+Two separate permissions, and a date can hold at most one of them:
 
-- **Filling in** — allowed for today and the two days before it, while the date
-  is still blank.
-- **Changing what is already down** — allowed only while the date it describes
-  is today.
+- **Filling in** — a date still blank, inside the tracker's `backfill` window.
+- **Changing what is already down** — a date already logged, inside the
+  tracker's `change` window.
 
-Together they mean a backfilled date locks the moment it is saved, so saving one
-asks first. Past that, an entry stands: no edit, no delete, no re-entry. The
-history is a record rather than a draft, which is the point of keeping it.
+Each tracker sets both, so the two can be as strict as they need to be:
 
-Both are enforced in `putDay` and `clearDay`, not only in the buttons. The
-backfill window is per tracker (`TRACKERS[...].backfill`) if the two ever need
-to differ.
+| | `backfill` | `change` | in practice |
+|---|---|---|---|
+| Days | 7 | 7 | fill in or change anything in the last week |
+| Sleep | 3 | 1 | fill in three days back; change only on the day itself |
+
+Where `change` is 1, a backfilled date locks the moment it is saved — the day it
+describes has already gone — so saving one asks first. Past that an entry
+stands: no edit, no delete, no re-entry. On Sleep the history is a record rather
+than a draft, which is the point of keeping it.
+
+Both permissions are enforced in `putDay` and `clearDay`, not only in the
+buttons, so a stale pane cannot write through them.
 
 Backups are prompted once a week rather than daily: on Sunday a count appears on
 the DATA button. One backup file holds both trackers. Exports go through the OS
