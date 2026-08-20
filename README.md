@@ -8,8 +8,12 @@ ringed in the calendar so standout entries are obvious at a glance.
 The switch at the top left picks which tracker you are looking at:
 
 - **Days** — how the day went, driven by me, others, or my health.
-- **Sleep** — how the night went, driven by my health, the alarm, an early
-  night, a late night, Ted, or how long it lasted.
+- **Sleep** — how the night went, driven by my health, a new place, the alarm,
+  duration, or Ted shenanigans.
+
+Each reason is one topic and the colour supplies the direction, so a late night
+that worked is green under Duration and one that cost you is red under the same
+reason. That keeps five buckets filling up instead of ten half-empty ones.
 
 The two share the five colours, the seven-day editing window, the calendar, the
 charts and the backup file, and nothing else. A day and a night on the same date

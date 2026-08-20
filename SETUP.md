@@ -28,8 +28,8 @@ will not appear in the Home Screen app — they are separate storage.
 ## How it works
 
 **Switching tracker** — the pill at the top left is Days / Sleep. Each keeps its
-own entries, its own calendar and its own charts; only the five colours and the
-backup file are shared. On the Sleep tracker a night belongs to the day it ended
+own entries, its own reasons, its own calendar and its own charts; only the five
+colours and the backup file are shared. On the Sleep tracker a night belongs to the day it ended
 on, so this morning's sleep goes under today.
 
 **Log** — the strip along the top is the last week, each day painted its own

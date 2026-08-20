@@ -349,20 +349,18 @@ const TRACKERS = {
     hint:"A night belongs to the day it ended on — log this morning's sleep under today.",
     subs:{xgreen:"One of the best nights", green:"Slept well", yellow:"Mixed",
           red:"Rough night", xred:"One of the worst nights"},
-    order:["health","alarm","early","late","ted","duration"],
+    order:["health","place","alarm","duration","ted"],
     reasons:{
-      health:   {label:"My health", sub:"Body, pain, illness, energy",
-                 phrase:"my health",       hex:"#4E9EA3"},
-      alarm:    {label:"Alarm",     sub:"How the morning ended — or did not",
-                 phrase:"the alarm",       hex:"#DE8FA6"},
-      early:    {label:"Early",     sub:"An early night, or an early start",
-                 phrase:"an early night",  hex:"#7FD1C4"},
-      late:     {label:"Late",      sub:"A late night, or a late start",
-                 phrase:"a late night",    hex:"#7C6FD0"},
-      ted:      {label:"Ted",       sub:"Sharing the night with Ted",
-                 phrase:"Ted",             hex:"#B57BC9"},
-      duration: {label:"Duration",  sub:"How long it lasted, however it felt",
-                 phrase:"how long it was", hex:"#5B8ED8"}
+      health:   {label:"My health",       sub:"Body, pain, illness, energy",
+                 phrase:"my health",           hex:"#4E9EA3"},
+      place:    {label:"New place",       sub:"Not my own bed",
+                 phrase:"being somewhere new", hex:"#5B8ED8"},
+      alarm:    {label:"Alarm",           sub:"Up at a set time, however it landed",
+                 phrase:"the alarm",           hex:"#DE8FA6"},
+      duration: {label:"Duration",        sub:"How much of it there was",
+                 phrase:"how long it was",     hex:"#7C6FD0"},
+      ted:      {label:"Ted shenanigans", sub:"However the night went with Ted",
+                 phrase:"Ted shenanigans",     hex:"#B57BC9"}
     }
   }
 };
@@ -372,7 +370,9 @@ const T = () => TRACKERS[tracker];
    without threading it through */
 let REASONS = TRACKERS.days.reasons;
 let XORDER  = TRACKERS.days.order;
-const reasonPhrase = x => REASONS[x].phrase || REASONS[x].label.toLowerCase();
+const knownReason = x => Object.prototype.hasOwnProperty.call(REASONS, x);
+const reasonPhrase = x => !knownReason(x) ? "a reason no longer on the list"
+  : (REASONS[x].phrase || REASONS[x].label.toLowerCase());
 function applyTracker(t){
   tracker = t; REASONS = T().reasons; XORDER = T().order;
 }
@@ -845,7 +845,9 @@ function ratingKey(){
 
 function renderCharts(){
   const view = PANE.charts;
-  const rows = inRange();
+  /* a row filed under a reason since removed still shows on Log and History —
+     it just cannot be counted into a breakdown that has no bucket for it */
+  const rows = inRange().filter(e => knownReason(e.reason));
   const total = rows.length;
   const bar = '<div class="rangebar">' + RANGES.map(r =>
     '<button data-k="' + r.k + '"' + (range === r.k ? ' class="on"' : '') + '>' + r.label + '</button>').join("") + '</div>';
