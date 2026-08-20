@@ -66,12 +66,17 @@ you choose where it goes. Two taps:
    apps, scroll it or tap **Save to Files** → **Google Drive** instead. Either
    route lands in the same Drive.
 
-If Drive ever misbehaves, anything that accepts a file works — Save to Files
-(iCloud Drive), or mail it to yourself. The file is plain text and small; what
-matters is that a copy exists somewhere that is not this phone.
+If the share sheet is unhelpful — it sometimes offers apps that take text rather
+than apps that take files — use **Copy backup as text** instead. That puts the
+whole backup on the clipboard, and you can paste it into a Drive document, a
+note, or an email to yourself. It always works.
 
-To put a backup back, use **Restore from backup** and pick the file. Days merge
-by date and the newer version of a day wins, so restoring never loses entries.
+The file is plain text and small; what matters is that a copy exists somewhere
+that is not this phone.
+
+To put a backup back, either **Restore from a file** and pick it, or paste the
+copied text into the box and tap **Restore from pasted text**. Days merge by date
+and the newer version of a day wins, so restoring never loses entries.
 - Do not "Clear History and Website Data" in Safari settings. It wipes this too.
 - Restoring a backup merges by date — the newer version of a day wins, and
   nothing already logged gets dropped.
