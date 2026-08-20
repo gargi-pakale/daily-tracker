@@ -33,15 +33,22 @@ colours and the backup file are shared. On the Sleep tracker a night belongs to 
 on, so this morning's sleep goes under today.
 
 **Log** — the strip along the top is the last week, each day painted its own
-colour so you can see the run you are on. Tap a day to work on it: pick a level,
-pick what drove it, add a comment if you want, save. **Extra green** and **extra
-red** are for the days that really stood out either way — use them sparingly and
-they stay meaningful. Only the last 7 days can be filled in or changed.
+colour so you can see the run you are on. Only the newest three are still open;
+tap one to work on it: pick a level, pick what drove it, add a comment if you
+want, save. Tapping any of the others reads it back to you. **Extra green** and
+**extra red** are for the days that really stood out either way — use them
+sparingly and they stay meaningful.
 
 Once a day is saved it stops being editable and just reads back to you: the
-colour, what drove it, and the comment. Changing it takes a deliberate tap on
-**Change this day**, so a stray touch can never rewrite it. There is only ever
-one entry per date.
+colour, what drove it, and the comment. On the day itself, changing it takes a
+deliberate tap on **Change this day**, so a stray touch can never rewrite it.
+After that day is over the entry is locked for good — it reads **LOGGED ·
+LOCKED** and there is no way back in.
+
+You can still fill in a blank date up to two days back, but because that date
+has already passed it locks as soon as you save it, so the app asks you to
+confirm first. A date older than that reads **CLOSED** and cannot be filled in
+at all. There is only ever one entry per date per tracker.
 
 **History** — a month at a time, each day a circle painted its colour. A small
 dot under the number means you left a comment. **Today** jumps back to the
