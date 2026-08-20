@@ -3,9 +3,13 @@
 A private daily tracker. Log each day green, yellow or red, say what drove it —
 me, others, or my health — and add a comment if it's worth remembering.
 
-Three tabs: **Log** (today or any of the last 7 days), **History** (a month
-calendar painted by colour), **Charts** (the split, what sits behind each
-colour, how each reason tends to turn out, weekday patterns, streaks).
+Three tabs: **Log** (today or any day in the last month), **History** (a
+read-only month calendar painted by colour), **Charts** (the split, what sits
+behind each colour, how each reason tends to turn out, weekday patterns,
+streaks).
+
+A saved day locks itself and reads back as a summary; changing it takes a
+deliberate tap. Editing only ever happens on the Log tab.
 
 ## Running it
 

@@ -56,9 +56,14 @@ button,.cell{touch-action:manipulation}
 .empty{font-size:13px;color:var(--dimmer);line-height:1.5;padding:22px 0;text-align:center}
 
 /* ---- day picker strip (Log tab) ---- */
-.dsel{display:flex;gap:6px;margin-top:16px}
-.dsel button{flex:1 1 0;padding:9px 0 8px;border-radius:11px;background:var(--surface);
+.dsel{display:flex;gap:6px;margin-top:16px;overflow-x:auto;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;padding-bottom:2px}
+.dsel::-webkit-scrollbar{display:none}
+.dsel button{flex:0 0 46px;padding:9px 0 8px;border-radius:11px;background:var(--surface);
   border:1px solid var(--line);text-align:center;position:relative}
+.dsel .mth{flex:0 0 auto;align-self:stretch;display:flex;align-items:center;padding:0 2px;
+  font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650;writing-mode:vertical-rl;
+  transform:rotate(180deg)}
 .dsel .wd{display:block;font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650}
 .dsel .dn{display:block;font-family:var(--mono);font-size:14px;margin-top:3px;color:var(--dim)}
 .dsel button.on{background:var(--surface2);border-color:var(--dim)}
@@ -262,9 +267,9 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.2.0";
 const SCHEMA_VERSION = 1;
-const EDIT_WINDOW = 7;   /* days back you are allowed to fill in or change */
+const EDIT_WINDOW = 31;  /* days back you are allowed to fill in or change */
 
 const RATINGS = {
   green:  {label:"Green",  sub:"Good",  hex:"#56A06B", cls:"g", score:2},
@@ -434,6 +439,7 @@ function renderBanners(){
 
 /* ================= LOG TAB ================= */
 let logDate = todayKey();
+let logEditing = false;
 let draft = {rating:null, reason:null, note:""};
 
 function loadDraft(){
@@ -459,9 +465,13 @@ function chipsHTML(sel, enabled, tight){
 
 function renderLog(){
   const view = PANE.log;
-  let sel = '<div class="dsel">';
+  let sel = '<div class="dsel">', lastMonth = null;
   for(let i = EDIT_WINDOW; i >= 0; i--){
     const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
+    if(d.getMonth() !== lastMonth){
+      lastMonth = d.getMonth();
+      sel += '<div class="mth">' + d.toLocaleDateString([], {month:"short"}).toUpperCase() + '</div>';
+    }
     sel += '<button data-d="' + k + '"' + (k === logDate ? ' class="on"' : '') + '>' +
       '<span class="wd">' + "SMTWTFS"[d.getDay()] + '</span>' +
       '<span class="dn">' + d.getDate() + '</span>' +
@@ -470,6 +480,25 @@ function renderLog(){
   sel += '</div>';
 
   const existing = index.get(logDate);
+
+  /* A day that is already saved reads back as a summary. Changing it takes a
+     deliberate tap, so a stray touch can never rewrite history. */
+  if(existing && !logEditing){
+    view.innerHTML = sel +
+      '<div class="picked">' + fmtDay(logDate) + '<span>LOGGED</span></div>' +
+      '<div class="readout"><div class="big" style="--c:' + RATINGS[existing.rating].hex + '">' +
+        '<i></i><b>' + RATINGS[existing.rating].label + '</b>' +
+        '<span style="color:var(--dim);font-size:14px">because of ' +
+          REASONS[existing.reason].label.toLowerCase() + '</span></div>' +
+        (existing.note ? '<div class="note">' + esc(existing.note) + '</div>'
+                       : '<div class="hint">No comment on this day.</div>') + '</div>' +
+      '<button class="btn" id="chg">Change this day</button>';
+    scrollStripToSelection(view);
+    view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
+    view.querySelector("#chg").onclick = () => { logEditing = true; renderLog(); };
+    return;
+  }
+
   const tiles = ratesHTML(draft.rating, false);
   const chips = chipsHTML(draft.reason, !!draft.rating, false);
   const ready = draft.rating && draft.reason;
@@ -483,12 +512,13 @@ function renderLog(){
     '<button class="btn primary" id="sv"' + (ready ? "" : " disabled") + '>' +
       (existing ? "Update this day" : "Save this day") + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
-    '<div class="hint">You can fill in or change any of the last ' + EDIT_WINDOW +
+    (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
+    '<div class="hint">Scroll the strip above to reach any of the last ' + EDIT_WINDOW +
       ' days. Older days are locked so the history stays honest.</div>';
 
-  view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => {
-    logDate = b.dataset.d; loadDraft(); renderLog();
-  });
+  scrollStripToSelection(view);
+
+  view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
   /* Selection only flips classes — the comment box is never rebuilt, so the
      keyboard and caret survive tapping a colour or a reason mid-sentence. */
   view.querySelectorAll(".rate").forEach(b => b.onclick = () => {
@@ -501,20 +531,34 @@ function renderLog(){
   view.querySelector("#sv").onclick = () => {
     if(!draft.rating || !draft.reason) return;
     putDay(logDate, draft.rating, draft.reason, view.querySelector("#nt").value);
-    buzz(); renderHeader(); renderBanners(); syncLog(); stale.log = false;
+    buzz(); renderHeader(); renderBanners();
+    logEditing = false; renderLog(); stale.log = false;
     toast(fmtDay(logDate) + " saved",
       RATINGS[draft.rating].label + " · " + REASONS[draft.reason].label);
   };
   view.querySelector("#rm").onclick = () => {
     if(!confirm("Remove the entry for " + fmtDay(logDate) + "?")) return;
-    clearDay(logDate); loadDraft(); renderHeader(); renderBanners(); renderLog(); stale.log = false;
+    clearDay(logDate); loadDraft(); renderHeader(); renderBanners();
+    logEditing = false; renderLog(); stale.log = false;
     toast("Entry removed", fmtShort(logDate));
   };
+  const cxl = view.querySelector("#cxl");
+  if(cxl) cxl.onclick = () => { logEditing = false; loadDraft(); renderLog(); };
+}
+
+function pickLogDate(k){
+  logDate = k; logEditing = false; loadDraft(); renderLog();
+}
+/* keep the chosen day in view now that the strip holds a month */
+function scrollStripToSelection(view){
+  const ds = view.querySelector(".dsel"), on = ds && ds.querySelector("button.on");
+  if(ds && on) ds.scrollLeft = on.offsetLeft - ds.clientWidth / 2 + on.offsetWidth / 2;
 }
 
 /* in-place update of everything on the Log pane that depends on state */
 function syncLog(){
   const view = PANE.log, existing = index.get(logDate);
+  if(!view.querySelector("#sv")) return;          /* summary mode — nothing to sync */
   view.querySelectorAll(".rate").forEach(b => b.classList.toggle("on", b.dataset.r === draft.rating));
   view.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b.dataset.x === draft.reason));
   view.querySelector(".chips").classList.toggle("off", !draft.rating);
@@ -594,84 +638,30 @@ function renderHistory(){
   });
 }
 
-let sheetKey = null, sheetDraft = null;
-
+/* Read-only. Every edit happens on the Log tab, so a tap in the calendar can
+   never change what a day says. */
 function daySheet(k){
-  sheetKey = k;
   const e = index.get(k);
-  sheetDraft = e ? {rating:e.rating, reason:e.reason, note:e.note || ""}
-                 : {rating:null, reason:null, note:""};
-  openSheet(daySheetHTML());
-  bindDaySheet();
-}
-function daySheetHTML(){
-  const k = sheetKey, e = index.get(k);
-  const head = '<h2>' + fmtDay(k) + '</h2><div class="meta">' +
+  let body = '<h2>' + fmtDay(k) + '</h2><div class="meta">' +
     (agoOf(k) <= 1
       ? dateOf(k).toLocaleDateString([], {month:"long", day:"numeric", year:"numeric"}).toUpperCase()
       : agoOf(k) + " DAYS AGO") + '</div>';
 
-  if(!editable(k)){
-    return head + (e
-      ? '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
-          '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
-          '<span style="color:var(--dim);font-size:14px">because of ' +
-            REASONS[e.reason].label.toLowerCase() + '</span></div>' +
-          (e.note ? '<div class="note">' + esc(e.note) + '</div>' : '') + '</div>'
-      : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing was logged for this day.</div></div>') +
-      '<div class="hint">Locked — more than ' + EDIT_WINDOW + ' days ago.</div>' +
-      '<button class="btn" onclick="closeSheet()">Close</button>';
-  }
+  body += e
+    ? '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
+        '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
+        '<span style="color:var(--dim);font-size:14px">because of ' +
+          REASONS[e.reason].label.toLowerCase() + '</span></div>' +
+        (e.note ? '<div class="note">' + esc(e.note) + '</div>'
+                : '<div class="hint">No comment on this day.</div>') + '</div>'
+    : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged for this day.</div></div>';
 
-  const ready = sheetDraft.rating && sheetDraft.reason;
-  return head +
-    '<div style="height:14px"></div>' +
-    ratesHTML(sheetDraft.rating, true) +
-    '<label>What drove it</label>' + chipsHTML(sheetDraft.reason, !!sheetDraft.rating, true) +
-    '<label for="snt">Comment (optional)</label>' +
-    '<textarea id="snt" placeholder="Anything worth remembering about this day">' +
-      esc(sheetDraft.note) + '</textarea>' +
-    '<button class="btn primary" id="ssv"' + (ready ? "" : " disabled") + '>' +
-      (e ? "Update this day" : "Save this day") + '</button>' +
-    '<button class="btn danger" id="srm"' + (e ? '' : ' hidden') + '>Remove this entry</button>' +
+  body += '<div class="hint">' + (editable(k)
+    ? 'To change this, open it on the Log tab.'
+    : 'Locked — more than ' + EDIT_WINDOW + ' days ago.') + '</div>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
-}
-function bindDaySheet(){
-  const nt = document.getElementById("snt");
-  if(!nt) return;                       /* locked day — read-only, nothing to bind */
-  nt.addEventListener("input", ev => { sheetDraft.note = ev.target.value; });
-  sheet.querySelectorAll(".rate").forEach(b => b.onclick = () => {
-    buzz(); sheetDraft.rating = (sheetDraft.rating === b.dataset.r) ? null : b.dataset.r;
-    syncSheet();
-  });
-  sheet.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-    buzz(); sheetDraft.reason = (sheetDraft.reason === b.dataset.x) ? null : b.dataset.x;
-    syncSheet();
-  });
-  document.getElementById("ssv").onclick = () => {
-    if(!sheetDraft.rating || !sheetDraft.reason) return;
-    putDay(sheetKey, sheetDraft.rating, sheetDraft.reason, nt.value);
-    buzz(); afterSheetWrite(fmtDay(sheetKey) + " saved",
-      RATINGS[sheetDraft.rating].label + " · " + REASONS[sheetDraft.reason].label);
-  };
-  document.getElementById("srm").onclick = () => {
-    if(!confirm("Remove the entry for " + fmtDay(sheetKey) + "?")) return;
-    clearDay(sheetKey); afterSheetWrite("Entry removed", fmtShort(sheetKey));
-  };
-}
 
-/* same in-place update as the Log pane, so the sheet's comment box survives */
-function syncSheet(){
-  sheet.querySelectorAll(".rate").forEach(b => b.classList.toggle("on", b.dataset.r === sheetDraft.rating));
-  sheet.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b.dataset.x === sheetDraft.reason));
-  sheet.querySelector(".chips").classList.toggle("off", !sheetDraft.rating);
-  document.getElementById("ssv").disabled = !(sheetDraft.rating && sheetDraft.reason);
-}
-function afterSheetWrite(msg, sub){
-  closeSheet();
-  if(sheetKey === logDate) loadDraft();
-  renderHeader(); renderBanners(); refreshCurrent();
-  toast(msg, sub);
+  openSheet(body);
 }
 
 /* ================= CHARTS TAB ================= */

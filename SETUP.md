@@ -25,15 +25,18 @@ will not appear in the Home Screen app — they are separate storage.
 
 ## How it works
 
-**Log** — pick the day along the top strip (today, or any of the last 7 days),
-tap a colour, tap what drove it, add a comment if you want, save. Saving again
-overwrites that day; there is only ever one entry per date.
+**Log** — the strip along the top scrolls back a month; tap a day to work on it.
+Pick a colour, pick what drove it, add a comment if you want, save.
+
+Once a day is saved it stops being editable and just reads back to you: the
+colour, what drove it, and the comment. Changing it takes a deliberate tap on
+**Change this day**, so a stray touch can never rewrite it. There is only ever
+one entry per date.
 
 **History** — a month at a time, each day a circle painted its colour. A small
 dot under the number means you left a comment. **Today** jumps back to the
-current month. Tap any day to open it: inside the 7-day window you can change
-the colour, reason and comment right there in the sheet. Older days are
-read-only.
+current month. Tapping a day shows you what you put down for it and nothing
+more — History never edits. All changes happen on the Log tab.
 
 **Charts** — pick a range, then: your green/yellow/red split, which reason sits
 behind each colour, how each reason tends to turn out, how the days of the week
