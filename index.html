@@ -34,8 +34,20 @@ button{background:none;border:none;padding:0;cursor:pointer}
 /* ---- header ---- */
 header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bottom:1px solid var(--line)}
 .hrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.name{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1}
-.who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em}
+.name{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em;
+  display:inline-flex;align-items:center;gap:6px}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;
+  padding:0 5px;border-radius:9px;background:var(--warn);color:#12151C;
+  font-size:10px;font-weight:700;letter-spacing:0}
+.badge[hidden]{display:none}
+.notice{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;margin-top:10px;
+  border-radius:12px;background:rgba(227,166,63,.11);border:1px solid rgba(227,166,63,.32)}
+.notice .ntx{flex:1;min-width:0;font-size:13px;line-height:1.45;color:#F0C989}
+.notice .ntx b{display:block;font-weight:650;color:var(--warn)}
+.notice .ntx span{color:#F0C989;opacity:.85}
+.notice button{flex:0 0 auto;padding:8px 12px;border-radius:9px;background:rgba(227,166,63,.2);
+  color:#F0C989;font-size:13px;font-weight:650}
 .date{margin-top:5px;font-size:12px;color:var(--dim);font-family:var(--mono);letter-spacing:.04em}
 /* ---- banners ---- */
 .banner{margin:12px var(--pad) 0;padding:11px 13px;border-radius:11px;font-size:13px;line-height:1.45;
@@ -56,22 +68,18 @@ button,.cell{touch-action:manipulation}
 .empty{font-size:13px;color:var(--dimmer);line-height:1.5;padding:22px 0;text-align:center}
 
 /* ---- day picker strip (Log tab) ---- */
-.dsel{display:flex;gap:6px;margin-top:16px;overflow-x:auto;scrollbar-width:none;
-  -webkit-overflow-scrolling:touch;padding-bottom:2px}
-.dsel::-webkit-scrollbar{display:none}
-.dsel button{flex:0 0 46px;padding:9px 0 8px;border-radius:11px;background:var(--surface);
-  border:1px solid var(--line);text-align:center;position:relative}
-.dsel .mth{flex:0 0 auto;align-self:stretch;display:flex;align-items:center;padding:0 2px;
-  font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650;writing-mode:vertical-rl;
-  transform:rotate(180deg)}
-.dsel .wd{display:block;font-size:9px;letter-spacing:.1em;color:var(--dimmer);font-weight:650}
-.dsel .dn{display:block;font-family:var(--mono);font-size:14px;margin-top:3px;color:var(--dim)}
-.dsel button.on{background:var(--surface2);border-color:var(--dim)}
-.dsel button.on .dn,.dsel button.on .wd{color:var(--text)}
-.dsel .pip{display:block;width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:transparent}
-.dsel .pip.gg{background:var(--xgreen)} .dsel .pip.g{background:var(--green)}
-.dsel .pip.y{background:var(--yellow)}
-.dsel .pip.r{background:var(--red)} .dsel .pip.rr{background:var(--xred)}
+.dsel{display:flex;gap:6px;margin-top:16px}
+.dsel button{flex:1 1 0;min-width:0;padding:10px 0 9px;border-radius:12px;background:var(--surface);
+  border:1px solid var(--line);text-align:center}
+.dsel .wd{display:block;font-size:9px;letter-spacing:.06em;color:var(--dimmer);font-weight:650}
+.dsel .dn{display:block;font-family:var(--mono);font-size:15px;margin-top:3px;color:var(--dim)}
+/* a logged day wears its own colour, so the week reads as a trend at a glance */
+.dsel button.lit{border-color:var(--c);background:var(--c)}
+.dsel button.lit .dn{color:#12151C;font-weight:650}
+.dsel button.lit .wd{color:rgba(18,21,28,.6)}
+.dsel button.on{outline:2px solid var(--text);outline-offset:2px}
+.dsel button.on:not(.lit){background:var(--surface2)}
+.dsel button.on:not(.lit) .dn,.dsel button.on:not(.lit) .wd{color:var(--text)}
 
 .picked{margin-top:18px;font-size:19px;font-weight:680;letter-spacing:-.01em}
 .picked span{display:block;font-size:11px;font-family:var(--mono);color:var(--dimmer);
@@ -246,8 +254,8 @@ nav button.on .ind{background:var(--text)}
 
 <header>
   <div class="hrow">
-    <div class="name">Days</div>
-    <button class="who" id="gearBtn">DATA</button>
+    <div class="name">Daily Tracker</div>
+    <button class="who" id="gearBtn">DATA<span class="badge" id="gearBadge" hidden></span></button>
   </div>
   <div class="date" id="dateLine"></div>
 </header>
@@ -271,9 +279,9 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.4.0";
 const SCHEMA_VERSION = 1;
-const EDIT_WINDOW = 31;  /* days back you are allowed to fill in or change */
+const EDIT_WINDOW = 7;   /* days back you are allowed to fill in or change */
 
 const RATINGS = {
   xgreen: {label:"Extra green", sub:"One of the best", hex:"#3FD07A", cls:"gg", extra:true},
@@ -351,6 +359,7 @@ function save(){
   stale.log = stale.history = stale.charts = true;   /* whoever is on screen refreshes itself */
   lsSet(LS_KEY, entries); lsSet(LS_META, meta);
   idbPut("entries", entries); idbPut("meta", meta);
+  refreshNotices();          /* the badge follows the data, not just the clock */
 }
 async function load(){
   await openIDB();
@@ -437,12 +446,45 @@ function renderBanners(){
   const b = [];
   if(memoryOnly)
     b.push('<div class="banner"><span><b>Storage is blocked.</b> Nothing you enter will survive closing the app. Open it from the Home Screen icon, not a private tab.</span></div>');
-  const since = daysSince(meta.lastBackup);
-  if(entries.length && (since === null || since >= 7))
-    b.push('<div class="banner"><span><b>' +
-      (since === null ? "No backup yet." : "Last backup was " + since + " days ago.") +
-      '</b> Export one and drop it in iCloud Drive.</span><button onclick="dataSheet()">Back up</button></div>');
   document.getElementById("banners").innerHTML = b.join("");
+  refreshNotices();
+}
+
+/* ---- notices: quiet until Sunday, then a count on the DATA button ---- */
+let updateReady = false;
+function lastSunday(){
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay());        /* Sunday 00:00 of this week */
+  return d;
+}
+function backupDue(){
+  if(!entries.filter(e => !e.deleted_at).length) return false;
+  if(!meta.lastBackup) return true;
+  return new Date(meta.lastBackup) < lastSunday();
+}
+function notices(){
+  const out = [];
+  if(backupDue()) out.push({
+    title: "Weekly backup",
+    body: meta.lastBackup
+      ? "Last one was " + daysSince(meta.lastBackup) + " days ago. Export this week's."
+      : "You have not backed up yet. Everything is on this device only.",
+    label: "Back up", fn: "exportJSON()"
+  });
+  if(updateReady) out.push({
+    title: "New version ready",
+    body: "Reload to start using it. Your entries are untouched.",
+    label: "Reload", fn: "forceUpdate()"
+  });
+  return out;
+}
+function refreshNotices(){
+  const n = notices().length;
+  const el = document.getElementById("gearBadge");
+  if(el){ el.textContent = n; el.hidden = !n; }
+  try {
+    if(navigator.setAppBadge){ n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); }
+  } catch(e){}
 }
 
 /* ================= LOG TAB ================= */
@@ -473,17 +515,13 @@ function chipsHTML(sel, enabled){
 
 function renderLog(){
   const view = PANE.log;
-  let sel = '<div class="dsel">', lastMonth = null;
+  let sel = '<div class="dsel">';
   for(let i = EDIT_WINDOW; i >= 0; i--){
     const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
-    if(d.getMonth() !== lastMonth){
-      lastMonth = d.getMonth();
-      sel += '<div class="mth">' + d.toLocaleDateString([], {month:"short"}).toUpperCase() + '</div>';
-    }
-    sel += '<button data-d="' + k + '"' + (k === logDate ? ' class="on"' : '') + '>' +
+    sel += '<button data-d="' + k + '" class="' + (e ? "lit" : "") + (k === logDate ? " on" : "") + '"' +
+      (e ? ' style="--c:' + RATINGS[e.rating].hex + '"' : '') + '>' +
       '<span class="wd">' + "SMTWTFS"[d.getDay()] + '</span>' +
-      '<span class="dn">' + d.getDate() + '</span>' +
-      '<span class="pip ' + (e ? RATINGS[e.rating].cls : "") + '"></span></button>';
+      '<span class="dn">' + d.getDate() + '</span></button>';
   }
   sel += '</div>';
 
@@ -501,7 +539,6 @@ function renderLog(){
         (existing.note ? '<div class="note">' + esc(existing.note) + '</div>'
                        : '<div class="hint">No comment on this day.</div>') + '</div>' +
       '<button class="btn" id="chg">Change this day</button>';
-    scrollStripToSelection(view);
     view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
     view.querySelector("#chg").onclick = () => { logEditing = true; renderLog(); };
     return;
@@ -521,10 +558,8 @@ function renderLog(){
       (existing ? "Update this day" : "Save this day") + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
-    '<div class="hint">Scroll the strip above to reach any of the last ' + EDIT_WINDOW +
+    '<div class="hint">Tap any day in the strip above to fill in or change the last ' + EDIT_WINDOW +
       ' days. Older days are locked so the history stays honest.</div>';
-
-  scrollStripToSelection(view);
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
   /* Selection only flips classes — the comment box is never rebuilt, so the
@@ -557,11 +592,7 @@ function renderLog(){
 function pickLogDate(k){
   logDate = k; logEditing = false; loadDraft(); renderLog();
 }
-/* keep the chosen day in view now that the strip holds a month */
-function scrollStripToSelection(view){
-  const ds = view.querySelector(".dsel"), on = ds && ds.querySelector("button.on");
-  if(ds && on) ds.scrollLeft = on.offsetLeft - ds.clientWidth / 2 + on.offsetWidth / 2;
-}
+
 
 /* in-place update of everything on the Log pane that depends on state */
 function syncLog(){
@@ -578,7 +609,8 @@ function syncLog(){
     existing ? "ALREADY LOGGED · EDITING" : "NOT LOGGED YET";
   view.querySelectorAll(".dsel button").forEach(b => {
     const e = index.get(b.dataset.d);
-    b.querySelector(".pip").className = "pip " + (e ? RATINGS[e.rating].cls : "");
+    b.classList.toggle("lit", !!e);
+    if(e) b.style.setProperty("--c", RATINGS[e.rating].hex); else b.style.removeProperty("--c");
   });
 }
 
@@ -861,8 +893,14 @@ function closeSheet(){
 /* ================= data sheet ================= */
 function dataSheet(){
   const since = daysSince(meta.lastBackup);
+  const ns = notices();
   openSheet(
     '<h2>Data</h2><div class="meta">EVERYTHING LIVES ON THIS DEVICE</div>' +
+    ns.map(n => '<div class="notice"><span class="ntx"><b>' + n.title + '</b>' +
+      '<span>' + n.body + '</span></span>' +
+      '<button onclick="' + n.fn + '">' + n.label + '</button></div>').join("") +
+    (ns.length ? '' : '<div class="hint" style="margin-top:12px">Nothing needs your attention. ' +
+      'A backup reminder appears here every Sunday.</div>') +
     '<div class="card" style="margin-top:16px">' +
       '<div class="kv"><span>Days on record</span><span>' + entries.filter(e => !e.deleted_at).length + '</span></div>' +
       '<div class="kv"><span>Last backup</span><span>' +
@@ -871,6 +909,8 @@ function dataSheet(){
     '</div>' +
     '<button class="btn primary" onclick="exportJSON()">Export backup file</button>' +
     '<button class="btn" onclick="exportCSV()">Export spreadsheet (CSV)</button>' +
+    '<div class="hint">On a phone these open the share sheet — pick Google Drive, ' +
+      'Files or iCloud from there.</div>' +
     '<label for="imp">Restore from backup</label>' +
     '<input type="file" id="imp" accept="application/json,.json">' +
     '<div class="hint">Restoring merges by date. Nothing already logged is lost — the newer version of a day wins.</div>' +
@@ -893,11 +933,29 @@ function download(name, text, mime){
 }
 const stamp = () => new Date().toISOString().slice(0,10);
 
+/* Hand the file to the OS share sheet when there is one — that is the route to
+   Google Drive, Files, iCloud, mail. Falls back to a plain download elsewhere. */
+function sendFile(name, text, mime){
+  try {
+    const file = new File([text], name, {type: mime});
+    if(navigator.canShare && navigator.canShare({files:[file]}))
+      return navigator.share({files:[file], title:name}).then(() => "shared");
+  } catch(e){ logErr("share", e); }
+  download(name, text, mime);
+  return Promise.resolve("downloaded");
+}
 function exportJSON(){
   const payload = {app:"days-tracker", schema_version:SCHEMA_VERSION, app_version:APP_VERSION,
     exported_at:new Date().toISOString(), entries:entries};
-  download("days-backup-" + stamp() + ".json", JSON.stringify(payload, null, 2), "application/json");
-  meta.lastBackup = new Date().toISOString(); save(); renderBanners(); dataSheet();
+  const name = "days-backup-" + stamp() + ".json";
+  sendFile(name, JSON.stringify(payload, null, 2), "application/json").then(how => {
+    meta.lastBackup = new Date().toISOString(); save(); refreshNotices();
+    if(document.getElementById("imp")) dataSheet();
+    toast("Backup made", how === "shared" ? "Save it to Google Drive" : name);
+  }).catch(err => {
+    if(err && err.name === "AbortError") return;       /* user closed the share sheet */
+    logErr("export", err); alert("Export failed. Check the Errors list.");
+  });
 }
 function exportCSV(){
   const head = ["date","weekday","rating","reason","comment","created_at","updated_at"];
@@ -906,7 +964,8 @@ function exportCSV(){
     e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"}), e.rating, e.reason, e.note,
     e.created_at, e.updated_at
   ].map(q).join(","));
-  download("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv");
+  sendFile("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv")
+    .catch(err => { if(!err || err.name !== "AbortError") logErr("export csv", err); });
 }
 function importJSON(ev){
   const f = ev.target.files && ev.target.files[0]; if(!f) return;
@@ -941,13 +1000,27 @@ document.addEventListener("visibilitychange", () => {
   if(document.hidden) return;
   if(agoOf(logDate) < 0){ logDate = todayKey(); loadDraft(); stale.log = true; }
   if(stale[tab]) refreshCurrent();
+  refreshNotices();
+  if("serviceWorker" in navigator)
+    navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
 });
 load().then(() => {
   loadDraft();
   renderHeader(); renderBanners();
   renderLog(); stale.log = false;
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("sw.js").catch(e => logErr("sw", e));
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      if(reg.waiting){ updateReady = true; refreshNotices(); }
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", () => {
+          if(nw.state === "installed" && navigator.serviceWorker.controller){
+            updateReady = true; refreshNotices();
+          }
+        });
+      });
+    }).catch(e => logErr("sw", e));
   }
 });
 </script>

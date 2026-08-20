@@ -26,10 +26,11 @@ will not appear in the Home Screen app — they are separate storage.
 
 ## How it works
 
-**Log** — the strip along the top scrolls back a month; tap a day to work on it.
-Pick a level, pick what drove it, add a comment if you want, save. **Extra
-green** and **extra red** are for the days that really stood out either way —
-use them sparingly and they stay meaningful.
+**Log** — the strip along the top is the last week, each day painted its own
+colour so you can see the run you are on. Tap a day to work on it: pick a level,
+pick what drove it, add a comment if you want, save. **Extra green** and **extra
+red** are for the days that really stood out either way — use them sparingly and
+they stay meaningful. Only the last 7 days can be filled in or changed.
 
 Once a day is saved it stops being editable and just reads back to you: the
 colour, what drove it, and the comment. Changing it takes a deliberate tap on
@@ -50,8 +51,10 @@ compare, streaks, and a plain-English summary at the bottom.
 ## Rules that keep the data alive
 
 - Open the app at least once a week. iOS deletes web app data after long gaps.
-- Export a backup regularly: **DATA** in the top right → Export backup file →
-  save it to iCloud Drive. The app nags you after 7 days without one.
+- Back up weekly. Every Sunday a reminder appears on the **DATA** button as a
+  small number; tap DATA → Back up. On a phone that opens the share sheet, so
+  you can send the file straight to Google Drive, Files or iCloud. The reminder
+  clears once you have backed up that week.
 - Do not "Clear History and Website Data" in Safari settings. It wipes this too.
 - Restoring a backup merges by date — the newer version of a day wins, and
   nothing already logged gets dropped.
