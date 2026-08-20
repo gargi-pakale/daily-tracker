@@ -51,10 +51,27 @@ compare, streaks, and a plain-English summary at the bottom.
 ## Rules that keep the data alive
 
 - Open the app at least once a week. iOS deletes web app data after long gaps.
-- Back up weekly. Every Sunday a reminder appears on the **DATA** button as a
-  small number; tap DATA → Back up. On a phone that opens the share sheet, so
-  you can send the file straight to Google Drive, Files or iCloud. The reminder
-  clears once you have backed up that week.
+- Back up weekly. Every Sunday a number appears on the **DATA** button; tap
+  DATA → Back up. The reminder clears once you have backed up that week.
+
+## Backing up to Google Drive
+
+The app cannot put files in Drive by itself — that would need a Google login and
+a server, and this app has neither. What it does is hand the file to iOS, and
+you choose where it goes. Two taps:
+
+1. **DATA → Export backup file.** The iOS share sheet opens holding
+   `days-backup-YYYY-MM-DD.json`.
+2. **Pick Google Drive**, then choose your folder. If Drive is not in the row of
+   apps, scroll it or tap **Save to Files** → **Google Drive** instead. Either
+   route lands in the same Drive.
+
+If Drive ever misbehaves, anything that accepts a file works — Save to Files
+(iCloud Drive), or mail it to yourself. The file is plain text and small; what
+matters is that a copy exists somewhere that is not this phone.
+
+To put a backup back, use **Restore from backup** and pick the file. Days merge
+by date and the newer version of a day wins, so restoring never loses entries.
 - Do not "Clear History and Website Data" in Safari settings. It wipes this too.
 - Restoring a backup merges by date — the newer version of a day wins, and
   nothing already logged gets dropped.

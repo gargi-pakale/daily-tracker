@@ -279,9 +279,10 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 const SCHEMA_VERSION = 1;
-const EDIT_WINDOW = 7;   /* days back you are allowed to fill in or change */
+const WINDOW_DAYS = 7;               /* today plus the six before it */
+const EDIT_WINDOW = WINDOW_DAYS - 1; /* ...expressed as days back */
 
 const RATINGS = {
   xgreen: {label:"Extra green", sub:"One of the best", hex:"#3FD07A", cls:"gg", extra:true},
@@ -558,8 +559,8 @@ function renderLog(){
       (existing ? "Update this day" : "Save this day") + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
-    '<div class="hint">Tap any day in the strip above to fill in or change the last ' + EDIT_WINDOW +
-      ' days. Older days are locked so the history stays honest.</div>';
+    '<div class="hint">Tap any day in the strip above to fill in or change it. ' +
+      'Anything older than these ' + WINDOW_DAYS + ' days is locked, so the history stays honest.</div>';
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
   /* Selection only flips classes — the comment box is never rebuilt, so the
@@ -700,7 +701,7 @@ function daySheet(k){
 
   body += '<div class="hint">' + (editable(k)
     ? 'To change this, open it on the Log tab.'
-    : 'Locked — more than ' + EDIT_WINDOW + ' days ago.') + '</div>' +
+    : 'Locked — outside the last ' + WINDOW_DAYS + ' days.') + '</div>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
 
   openSheet(body);
