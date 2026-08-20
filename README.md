@@ -5,11 +5,12 @@ levels: extra green, green, yellow, red, extra red. Say what drove it and add a
 comment if it's worth remembering. The two extremes are drawn brighter and
 ringed in the calendar so standout entries are obvious at a glance.
 
-The switch at the top left picks which tracker you are looking at:
+The switch at the top left picks which tracker you are looking at. Sleep leads
+because it is logged first thing; the day is logged last thing.
 
-- **Days** — how the day went, driven by me, others, or my health.
 - **Sleep** — how the night went, driven by my health, a new place, the alarm,
   duration, or Ted shenanigans.
+- **Days** — how the day went, driven by me, others, or my health.
 
 Each reason is one topic and the colour supplies the direction, so a late night
 that worked is green under Duration and one that cost you is red under the same
@@ -36,8 +37,8 @@ Each tracker sets both, so the two can be as strict as they need to be:
 
 | | `backfill` | `change` | in practice |
 |---|---|---|---|
-| Days | 7 | 7 | fill in or change anything in the last week |
 | Sleep | 3 | 1 | fill in three days back; change only on the day itself |
+| Days | 7 | 7 | fill in or change anything in the last week |
 
 Where `change` is 1, a backfilled date locks the moment it is saved — the day it
 describes has already gone — so saving one asks first. Past that an entry

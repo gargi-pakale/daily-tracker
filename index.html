@@ -231,7 +231,7 @@ nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--l
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
 nav button{position:relative;flex:1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   font-weight:650;color:var(--dimmer);line-height:1.1;
-  padding:11px 0 calc(11px + clamp(0px, env(safe-area-inset-bottom), 6px))}
+  padding:8px 0 calc(7px + clamp(0px, env(safe-area-inset-bottom), 6px))}
 nav button.on{color:var(--text)}
 nav button .ind{position:absolute;top:0;left:50%;transform:translateX(-50%);
   width:18px;height:2px;border-radius:0 0 2px 2px;background:transparent}
@@ -276,8 +276,8 @@ nav button.on .ind{background:var(--text)}
 <header>
   <div class="hrow">
     <div class="tsw" id="tsw">
-      <button data-t="days">Days</button>
       <button data-t="sleep">Sleep</button>
+      <button data-t="days">Days</button>
     </div>
     <button class="who" id="gearBtn">DATA<span class="badge" id="gearBadge" hidden></span></button>
   </div>
@@ -323,24 +323,6 @@ const isGood = r => r === "green" || r === "xgreen";
 /* Two trackers share the five colours, the seven-day window, the calendar, the
    charts and the backup file. Everything that differs between them lives here. */
 const TRACKERS = {
-  days: {
-    label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:7, change:7,
-    prompt:"What drove it",
-    placeholder:"Anything worth remembering about this day",
-    mix:"Day mix",
-    hint:"",
-    subs:{xgreen:"One of the best", green:"Good", yellow:"Mixed", red:"Rough",
-          xred:"One of the worst"},
-    order:["me","others","health"],
-    reasons:{
-      me:     {label:"Me",        sub:"Something in me — mood, choices, headspace",
-               phrase:"me",        hex:"#8A79C6"},
-      others: {label:"Others",    sub:"People around me",
-               phrase:"others",    hex:"#5B8ED8"},
-      health: {label:"My health", sub:"Body, energy, sleep, pain",
-               phrase:"my health", hex:"#4E9EA3"}
-    }
-  },
   sleep: {
     label:"Sleep", noun:"night", nounPl:"nights", every:"every night", backfill:3, change:1,
     prompt:"What drove the night",
@@ -362,14 +344,32 @@ const TRACKERS = {
       ted:      {label:"Ted shenanigans", sub:"However the night went with Ted",
                  phrase:"Ted shenanigans",     hex:"#B57BC9"}
     }
+  },
+  days: {
+    label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:7, change:7,
+    prompt:"What drove it",
+    placeholder:"Anything worth remembering about this day",
+    mix:"Day mix",
+    hint:"",
+    subs:{xgreen:"One of the best", green:"Good", yellow:"Mixed", red:"Rough",
+          xred:"One of the worst"},
+    order:["me","others","health"],
+    reasons:{
+      me:     {label:"Me",        sub:"Something in me — mood, choices, headspace",
+               phrase:"me",        hex:"#8A79C6"},
+      others: {label:"Others",    sub:"People around me",
+               phrase:"others",    hex:"#5B8ED8"},
+      health: {label:"My health", sub:"Body, energy, sleep, pain",
+               phrase:"my health", hex:"#4E9EA3"}
+    }
   }
 };
-let tracker = "days";
+let tracker = "sleep";
 const T = () => TRACKERS[tracker];
 /* kept as plain globals so every render below reads the current tracker's set
    without threading it through */
-let REASONS = TRACKERS.days.reasons;
-let XORDER  = TRACKERS.days.order;
+let REASONS = TRACKERS.sleep.reasons;
+let XORDER  = TRACKERS.sleep.order;
 const knownReason = x => Object.prototype.hasOwnProperty.call(REASONS, x);
 const reasonPhrase = x => !knownReason(x) ? "a reason no longer on the list"
   : (REASONS[x].phrase || REASONS[x].label.toLowerCase());
@@ -447,8 +447,8 @@ async function load(){
   const b = await idbGet("entries");
   entries = mergeSets(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []);
   const ma = lsGet(LS_META, null), mb = await idbGet("meta");
-  meta = Object.assign({lastBackup:null, tracker:"days"}, mb || {}, ma || {});
-  applyTracker(TRACKERS[meta.tracker] ? meta.tracker : "days");
+  meta = Object.assign({lastBackup:null, tracker:"sleep"}, mb || {}, ma || {});
+  applyTracker(TRACKERS[meta.tracker] ? meta.tracker : "sleep");
   if(a === null && b === null){
     try { localStorage.setItem("days.test","1"); localStorage.removeItem("days.test"); }
     catch(e){ memoryOnly = true; logErr("storage unavailable", e); }
