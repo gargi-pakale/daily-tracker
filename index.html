@@ -32,7 +32,7 @@ body{height:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidde
 header,#banners{flex:0 0 auto;width:100%;max-width:430px;margin-left:auto;margin-right:auto}
 main{flex:1 1 auto;min-height:0;width:100%;max-width:430px;margin-left:auto;margin-right:auto;
   overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-  padding-bottom:24px}
+  padding-bottom:16px}
 button,input,textarea,select{font:inherit;color:inherit}
 button{background:none;border:none;padding:0;cursor:pointer}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -42,7 +42,7 @@ button{background:none;border:none;padding:0;cursor:pointer}
 header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bottom:1px solid var(--line)}
 @media (display-mode:standalone){
   header{padding-top:calc(max(env(safe-area-inset-top), 44px) + 10px)}
-  nav{padding-bottom:max(env(safe-area-inset-bottom), 12px)}
+  nav{padding-bottom:clamp(6px, env(safe-area-inset-bottom), 20px)}
 }
 .hrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .name{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1}
@@ -218,12 +218,12 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 
 /* ---- nav ---- */
 nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
-  padding-bottom:env(safe-area-inset-bottom);
+  padding-bottom:clamp(0px, env(safe-area-inset-bottom), 20px);
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
-nav button{flex:1;padding:13px 0 12px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+nav button{flex:1;padding:8px 0 7px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   font-weight:650;color:var(--dimmer)}
 nav button.on{color:var(--text)}
-nav button .ind{display:block;width:20px;height:2px;border-radius:2px;background:transparent;margin:0 auto 7px}
+nav button .ind{display:block;width:20px;height:2px;border-radius:2px;background:transparent;margin:0 auto 5px}
 nav button.on .ind{background:var(--text)}
 
 /* ---- sheet + toast ---- */
@@ -289,7 +289,7 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.7.0";
+const APP_VERSION = "1.7.1";
 const SCHEMA_VERSION = 1;
 const WINDOW_DAYS = 7;               /* today plus the six before it */
 const EDIT_WINDOW = WINDOW_DAYS - 1; /* ...expressed as days back */
@@ -845,8 +845,9 @@ function renderCharts(){
         '<div class="k">Good streak now</div></div>' +
       '<div class="stat"><div class="v" style="color:var(--green)">' + best + '</div>' +
         '<div class="k">Longest good streak</div></div>' +
-      '<div class="stat"><div class="v">' + pct(total, span) + '%</div>' +
-        '<div class="k">Days logged in range</div></div>' +
+      '<div class="stat"><div class="v">' + total +
+          '<span style="font-size:14px;color:var(--dim)"> / ' + span + '</span></div>' +
+        '<div class="k">Days filled in</div></div>' +
       '<div class="stat"><div class="v">' + all.length + '</div>' +
         '<div class="k">Days on record</div></div>' +
       '</div></div>' +
