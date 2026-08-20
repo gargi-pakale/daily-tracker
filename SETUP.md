@@ -5,17 +5,18 @@ show up. Everything stays on your phone. No account, no server, no one else.
 
 ## Put it online (once, on a computer)
 
-1. Go to **app.netlify.com/drop**
-2. Drag the whole `daysapp` folder onto the page. Keep all five files together.
-3. You get a URL right away, like `random-name-1234.netlify.app`.
-4. Sign up for the free account when prompted, or the site expires in an hour.
-5. Site settings → Change site name → something like `gargi-days`.
+The app lives at **github.com/gargi-pakale/daily-tracker** and is served by
+GitHub Pages straight from the `main` branch.
 
-GitHub Pages and Cloudflare Pages work the same way if you prefer them.
+1. Push the code: `git push -u origin main`
+2. In the repo, go to **Settings → Pages**.
+3. Source: **Deploy from a branch** → branch `main` → folder `/ (root)` → Save.
+4. A minute later it is live at **https://gargi-pakale.github.io/daily-tracker/**
 
 ## Install on your iPhone
 
-1. Open the URL in **Safari** — not Chrome, not a link preview inside another app.
+1. Open **https://gargi-pakale.github.io/daily-tracker/** in **Safari** — not
+   Chrome, not a link preview inside another app.
 2. Tap the Share button, scroll down, tap **Add to Home Screen**, tap Add.
 3. Open the app **from the new icon** from then on.
 
@@ -49,9 +50,17 @@ compare, streaks, and a plain-English summary at the bottom.
 
 ## Updating
 
-New versions do not download automatically. When you get a new copy: drag the
-folder onto Netlify again, then in the app tap DATA → Check for update. Your
-entries survive updates; they are stored separately from the app itself.
+Push to `main` and GitHub Pages redeploys on its own within a minute. The
+installed app does not pick that up by itself, though — open it and tap
+**DATA → Check for update**. Your entries survive updates; they are stored
+separately from the app itself.
+
+## If you ever move it somewhere else
+
+Your logged days are tied to the address `gargi-pakale.github.io`. Putting the
+app on a different domain — a custom domain, Cloudflare, anywhere — gives you an
+app with no history in it. Export a backup first and restore it on the new
+address, or the days are gone.
 
 ## What's here
 
