@@ -305,8 +305,8 @@ nav button.on .ind{background:var(--text)}
 "use strict";
 const APP_VERSION = "1.9.0";
 const SCHEMA_VERSION = 2;   /* 2 adds `tracker` to every row; rows without one are days */
-const WINDOW_DAYS = 7;               /* today plus the six before it */
-const EDIT_WINDOW = WINDOW_DAYS - 1; /* ...expressed as days back */
+const STRIP_DAYS = 7;                /* how much of the week the Log strip shows */
+const STRIP_BACK = STRIP_DAYS - 1;   /* ...expressed as days back */
 
 /* the five colours are the one thing both trackers share outright; the words
    under each label come from the tracker (TRACKERS[...].subs) */
@@ -324,7 +324,7 @@ const isGood = r => r === "green" || r === "xgreen";
    charts and the backup file. Everything that differs between them lives here. */
 const TRACKERS = {
   days: {
-    label:"Days", noun:"day", nounPl:"days", every:"every day",
+    label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:3,
     prompt:"What drove it",
     placeholder:"Anything worth remembering about this day",
     mix:"Day mix",
@@ -342,7 +342,7 @@ const TRACKERS = {
     }
   },
   sleep: {
-    label:"Sleep", noun:"night", nounPl:"nights", every:"every night",
+    label:"Sleep", noun:"night", nounPl:"nights", every:"every night", backfill:3,
     prompt:"What drove the night",
     placeholder:"Anything worth remembering about this night",
     mix:"Night mix",
@@ -479,7 +479,16 @@ function dateOf(k){ const [y,m,d] = k.split("-").map(Number); return new Date(y,
 const todayKey = () => keyOf(new Date());
 function shiftKey(k, n){ const d = dateOf(k); d.setDate(d.getDate()+n); return keyOf(d); }
 function agoOf(k){ return Math.round((dateOf(todayKey()) - dateOf(k)) / 86400000); }
-function editable(k){ const a = agoOf(k); return a >= 0 && a <= EDIT_WINDOW; }
+/* Two separate permissions, and a date can hold at most one of them.
+   Entering is allowed anywhere in the backfill window while the date is still
+   blank. Changing what is already down is allowed only while the date it
+   describes is today — once that day is over the entry stands. Together they
+   mean a backfilled date locks the moment it is saved. */
+const backfillDays = () => T().backfill;
+const inWindow  = k => { const a = agoOf(k); return a >= 0 && a <= backfillDays() - 1; };
+const canEnter  = k => inWindow(k) && !index.has(k);
+const canChange = k => k === todayKey() && index.has(k);
+const editable  = k => canEnter(k) || canChange(k);
 function fmtDay(k){
   if(k === todayKey()) return "Today";
   if(k === shiftKey(todayKey(), -1)) return "Yesterday";
@@ -497,6 +506,7 @@ const nOf = n => n + " " + (n === 1 ? T().noun : T().nounPl);
 
 /* ================= writing ================= */
 function putDay(date, rating, reason, note){
+  if(!editable(date)) return false;        /* never trust the button alone */
   const now = new Date().toISOString();
   /* tombstones included, so re-logging revives */
   const old = entries.find(e => e.date === date && trackerOf(e) === tracker);
@@ -508,13 +518,16 @@ function putDay(date, rating, reason, note){
       created_at:now, updated_at:now, deleted_at:null, schema_version:SCHEMA_VERSION});
   }
   save();
+  return true;
 }
 function clearDay(date){
+  if(!canChange(date)) return false;       /* deleting a locked day is a change */
   const old = index.get(date);
-  if(!old) return;
+  if(!old) return false;
   old.deleted_at = new Date().toISOString();
   old.updated_at = old.deleted_at;
   save();
+  return true;
 }
 
 /* ================= chrome ================= */
@@ -606,10 +619,19 @@ function chipsHTML(sel, enabled){
         '<i>' + REASONS[x].sub + '</i></span></button>').join("") + '</div>';
 }
 
+function readoutHTML(e){
+  return '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
+    '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
+    '<span style="color:var(--dim);font-size:14px">because of ' + reasonPhrase(e.reason) +
+    '</span></div>' +
+    (e.note ? '<div class="note">' + esc(e.note) + '</div>'
+            : '<div class="hint">No comment on this ' + T().noun + '.</div>') + '</div>';
+}
+
 function renderLog(){
   const view = PANE.log;
   let sel = '<div class="dsel">';
-  for(let i = EDIT_WINDOW; i >= 0; i--){
+  for(let i = STRIP_BACK; i >= 0; i--){
     const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
     sel += '<button data-d="' + k + '" class="' + (e ? "lit" : "") + (k === logDate ? " on" : "") + '"' +
       (e ? ' style="--c:' + RATINGS[e.rating].hex + '"' : '') + '>' +
@@ -619,21 +641,34 @@ function renderLog(){
   sel += '</div>';
 
   const existing = index.get(logDate);
+  const mayChange = canChange(logDate);
 
-  /* A day that is already saved reads back as a summary. Changing it takes a
-     deliberate tap, so a stray touch can never rewrite history. */
-  if(existing && !logEditing){
+  /* Anything already saved reads back as a summary. On the day itself changing
+     it takes a deliberate tap, so a stray touch cannot rewrite it; after that
+     day there is no way back in at all. */
+  if(existing && !(mayChange && logEditing)){
     view.innerHTML = sel +
-      '<div class="picked">' + fmtDay(logDate) + '<span>LOGGED</span></div>' +
-      '<div class="readout"><div class="big" style="--c:' + RATINGS[existing.rating].hex + '">' +
-        '<i></i><b>' + RATINGS[existing.rating].label + '</b>' +
-        '<span style="color:var(--dim);font-size:14px">because of ' +
-          reasonPhrase(existing.reason) + '</span></div>' +
-        (existing.note ? '<div class="note">' + esc(existing.note) + '</div>'
-                       : '<div class="hint">No comment on this day.</div>') + '</div>' +
-      '<button class="btn" id="chg">Change this day</button>';
+      '<div class="picked">' + fmtDay(logDate) +
+        '<span>' + (mayChange ? "LOGGED" : "LOGGED &middot; LOCKED") + '</span></div>' +
+      readoutHTML(existing) +
+      (mayChange
+        ? '<button class="btn" id="chg">Change this ' + T().noun + '</button>'
+        : '<div class="hint">Locked. A ' + T().noun + ' can only be changed on the ' +
+            'day it belongs to — after that it stands.</div>');
     view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
-    view.querySelector("#chg").onclick = () => { logEditing = true; renderLog(); };
+    const chg = view.querySelector("#chg");
+    if(chg) chg.onclick = () => { logEditing = true; renderLog(); };
+    return;
+  }
+
+  /* Blank and out of reach: too far back to fill in now. */
+  if(!existing && !canEnter(logDate)){
+    view.innerHTML = sel +
+      '<div class="picked">' + fmtDay(logDate) + '<span>CLOSED</span></div>' +
+      '<div class="hint" style="margin-top:16px">Nothing was logged, and this ' + T().noun +
+        ' is closed. You can only fill in today and the ' + (backfillDays() - 1) +
+        ' ' + (backfillDays() === 2 ? T().noun : T().nounPl) + ' before it.</div>';
+    view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
     return;
   }
 
@@ -651,8 +686,10 @@ function renderLog(){
       (existing ? "Update this " + T().noun : "Save this " + T().noun) + '</button>' +
     '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     (existing ? '<button class="btn" id="cxl">Cancel</button>' : '') +
-    '<div class="hint">Tap any day in the strip above to fill in or change it. ' +
-      'Anything older than these ' + WINDOW_DAYS + ' days is locked, so the history stays honest.' +
+    '<div class="hint">You can fill in today and the ' + (backfillDays() - 1) + ' ' +
+      (backfillDays() === 2 ? T().noun : T().nounPl) + ' before it. Once saved, a ' + T().noun +
+      ' can only be changed on the day it belongs to — after that it stands, ' +
+      'so the history stays honest.' +
       (T().hint ? '<br>' + T().hint : '') + '</div>';
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
@@ -667,7 +704,12 @@ function renderLog(){
   view.querySelector("#nt").addEventListener("input", ev => { draft.note = ev.target.value; });
   view.querySelector("#sv").onclick = () => {
     if(!draft.rating || !draft.reason) return;
-    putDay(logDate, draft.rating, draft.reason, view.querySelector("#nt").value);
+    /* backfilling is a one-shot: the day it describes has already passed, so it
+       is locked the instant it is written */
+    if(logDate !== todayKey() &&
+       !confirm(fmtDay(logDate) + " is already past, so this locks as soon as you save it " +
+                "and cannot be changed afterwards.\n\nSave it?")) return;
+    if(!putDay(logDate, draft.rating, draft.reason, view.querySelector("#nt").value)) return;
     buzz(); renderHeader(); renderBanners();
     logEditing = false; renderLog(); stale.log = false;
     toast(fmtDay(logDate) + " saved",
@@ -784,18 +826,15 @@ function daySheet(k){
       : agoOf(k) + " DAYS AGO") + '</div>';
 
   body += e
-    ? '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
-        '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
-        '<span style="color:var(--dim);font-size:14px">because of ' +
-          reasonPhrase(e.reason) + '</span></div>' +
-        (e.note ? '<div class="note">' + esc(e.note) + '</div>'
-                : '<div class="hint">No comment on this day.</div>') + '</div>'
+    ? readoutHTML(e)
     : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged on the ' +
         T().label.toLowerCase() + ' tracker for this day.</div></div>';
 
-  body += '<div class="hint">' + (editable(k)
-    ? 'To change this, open it on the Log tab.'
-    : 'Locked — outside the last ' + WINDOW_DAYS + ' days.') + '</div>' +
+  body += '<div class="hint">' + (
+      canChange(k) ? 'To change this, open it on the Log tab.'
+    : canEnter(k)  ? 'Not logged yet — you can still fill it in on the Log tab.'
+    : e            ? 'Locked — only changeable on the day it belongs to.'
+    :                'Closed — outside the last ' + backfillDays() + ' ' + T().nounPl + '.') + '</div>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
 
   openSheet(body);
@@ -967,7 +1006,8 @@ function setTracker(t){
   meta.tracker = t;
   lsSet(LS_META, meta); idbPut("meta", meta);
   reindex();
-  if(!editable(logDate)) logDate = todayKey();
+  const back = agoOf(logDate);
+  if(back < 0 || back > STRIP_BACK) logDate = todayKey();
   logEditing = false; loadDraft();
   stale.log = stale.history = stale.charts = true;
   scrollMem.log = scrollMem.history = scrollMem.charts = 0;
