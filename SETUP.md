@@ -1,7 +1,8 @@
 # Days — setup
 
-Log every day as green, yellow or red, say what drove it, and watch the pattern
-show up. Everything stays on your phone. No account, no server, no one else.
+Rate every day on five levels — extra green, green, yellow, red, extra red —
+say what drove it, and watch the pattern show up. Everything stays on your
+phone. No account, no server, no one else.
 
 ## Put it online (once, on a computer)
 
@@ -26,7 +27,9 @@ will not appear in the Home Screen app — they are separate storage.
 ## How it works
 
 **Log** — the strip along the top scrolls back a month; tap a day to work on it.
-Pick a colour, pick what drove it, add a comment if you want, save.
+Pick a level, pick what drove it, add a comment if you want, save. **Extra
+green** and **extra red** are for the days that really stood out either way —
+use them sparingly and they stay meaningful.
 
 Once a day is saved it stops being editable and just reads back to you: the
 colour, what drove it, and the comment. Changing it takes a deliberate tap on
@@ -35,8 +38,10 @@ one entry per date.
 
 **History** — a month at a time, each day a circle painted its colour. A small
 dot under the number means you left a comment. **Today** jumps back to the
-current month. Tapping a day shows you what you put down for it and nothing
-more — History never edits. All changes happen on the Log tab.
+current month. Extra green and extra red days are drawn brighter and ringed, so
+the standout days catch your eye as you scan the month. Tapping a day shows you
+what you put down for it and nothing more — History never edits. All changes
+happen on the Log tab.
 
 **Charts** — pick a range, then: your green/yellow/red split, which reason sits
 behind each colour, how each reason tends to turn out, how the days of the week

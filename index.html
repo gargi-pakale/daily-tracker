@@ -15,7 +15,7 @@
 :root{
   --bg:#12151C; --surface:#1B1F29; --surface2:#232834; --line:#2E3440;
   --text:#E8EAEF; --dim:#8A93A6; --dimmer:#5C6478;
-  --green:#56A06B; --yellow:#E3A63F; --red:#C4605A;
+  --xgreen:#3FD07A; --green:#56A06B; --yellow:#E3A63F; --red:#C4605A; --xred:#F2453D;
   --me:#8A79C6; --others:#5B8ED8; --health:#4E9EA3;
   --warn:#E3A63F; --mono:ui-monospace,"SF Mono",Menlo,monospace;
   --pad:16px;
@@ -69,30 +69,28 @@ button,.cell{touch-action:manipulation}
 .dsel button.on{background:var(--surface2);border-color:var(--dim)}
 .dsel button.on .dn,.dsel button.on .wd{color:var(--text)}
 .dsel .pip{display:block;width:5px;height:5px;border-radius:50%;margin:4px auto 0;background:transparent}
-.dsel .pip.g{background:var(--green)} .dsel .pip.y{background:var(--yellow)} .dsel .pip.r{background:var(--red)}
+.dsel .pip.gg{background:var(--xgreen)} .dsel .pip.g{background:var(--green)}
+.dsel .pip.y{background:var(--yellow)}
+.dsel .pip.r{background:var(--red)} .dsel .pip.rr{background:var(--xred)}
 
 .picked{margin-top:18px;font-size:19px;font-weight:680;letter-spacing:-.01em}
 .picked span{display:block;font-size:11px;font-family:var(--mono);color:var(--dimmer);
   letter-spacing:.06em;margin-top:3px;font-weight:400}
 
 /* ---- rating tiles ---- */
-.rates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:14px}
-.rate{aspect-ratio:.92/1;border-radius:16px;background:var(--surface);border:1px solid var(--line);
-  display:flex;flex-direction:column;justify-content:space-between;padding:12px;text-align:left;
-  transition:transform .09s ease,background .16s ease,border-color .16s ease;overflow:hidden}
-.rate:active{transform:scale(.965)}
-.rate .swatch{width:26px;height:26px;border-radius:9px;background:var(--c)}
-.rate .lbl{display:block;font-size:15px;font-weight:650;letter-spacing:-.01em}
-.rate .sub{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
-  font-weight:650;margin-top:3px}
+.rates{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.rate{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:13px;
+  background:var(--surface);border:1px solid var(--line);text-align:left;
+  transition:transform .09s ease,background .16s ease,border-color .16s ease}
+.rate:active{transform:scale(.985)}
+.rate .swatch{width:16px;height:16px;border-radius:5px;background:var(--c);flex:0 0 auto}
+.rate.extra .swatch{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
+.rate .t{flex:1;min-width:0}
+.rate .lbl{display:block;font-size:15px;font-weight:620;letter-spacing:-.01em}
+.rate .sub{display:block;font-size:11px;color:var(--dimmer);margin-top:2px}
 .rate.on{background:var(--c);border-color:var(--c)}
 .rate.on .lbl{color:#12151C} .rate.on .sub{color:rgba(18,21,28,.66)}
-.rate.on .swatch{background:rgba(18,21,28,.28)}
-.rates.tight .rate{aspect-ratio:auto;flex-direction:row;align-items:center;justify-content:flex-start;
-  gap:9px;padding:12px 10px}
-.rates.tight .rate .swatch{width:16px;height:16px;border-radius:5px;flex:0 0 auto}
-.rates.tight .rate .lbl{font-size:14px}
-.rates.tight .rate .sub{display:none}
+.rate.on .swatch{background:rgba(18,21,28,.28);box-shadow:none}
 
 /* ---- reason chips ---- */
 .chips{display:flex;flex-direction:column;gap:8px;margin-top:12px}
@@ -106,10 +104,6 @@ button,.cell{touch-action:manipulation}
 .chip .t i{display:block;font-style:normal;font-size:11px;color:var(--dimmer);margin-top:2px}
 .chip.on{background:var(--surface2);border-color:var(--c)}
 .chips.off{opacity:.34;pointer-events:none}
-.chips.tight{flex-direction:row;gap:7px}
-.chips.tight .chip{flex:1 1 0;flex-direction:column;align-items:flex-start;gap:8px;padding:11px 10px}
-.chips.tight .chip .t b{font-size:13px}
-.chips.tight .chip .t i{display:none}
 
 /* ---- forms / buttons ---- */
 label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer);
@@ -154,14 +148,19 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .cal .cell.g{background:var(--green);border-color:var(--green);color:#12151C;font-weight:600}
 .cal .cell.y{background:var(--yellow);border-color:var(--yellow);color:#12151C;font-weight:600}
 .cal .cell.r{background:var(--red);border-color:var(--red);color:#12151C;font-weight:600}
+.cal .cell.gg{background:var(--xgreen);border-color:var(--xgreen);color:#0A1710;font-weight:700;
+  box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(63,208,122,.5)}
+.cal .cell.rr{background:var(--xred);border-color:var(--xred);color:#1A0B0A;font-weight:700;
+  box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(242,69,61,.5)}
 .cal .cell.future{opacity:.28}
-.cal .cell.today{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--dim)}
+.cal .cell.today{outline:2px solid var(--text);outline-offset:2px}
 .cal .cell .nt{position:absolute;bottom:6px;left:50%;margin-left:-2px;width:4px;height:4px;
   border-radius:50%;background:rgba(18,21,28,.45)}
 .cal .cell.locked{opacity:.86}
 .legend{display:flex;gap:14px;margin-top:16px;flex-wrap:wrap}
 .legend div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
 .legend i{width:9px;height:9px;border-radius:3px;display:block}
+.legend i.halo{box-shadow:0 0 0 2px var(--bg),0 0 0 3px currentColor}
 
 /* ---- charts ---- */
 .rangebar{display:flex;gap:6px;margin-top:16px}
@@ -170,12 +169,15 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .rangebar button.on{background:var(--surface2);border-color:var(--dim);color:var(--text)}
 .bigsplit{display:flex;height:15px;border-radius:8px;overflow:hidden;margin-top:14px;background:var(--surface2)}
 .bigsplit i{display:block;height:100%}
-.pcts{display:flex;gap:10px;margin-top:14px}
-.pct{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px}
-.pct .v{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1;color:var(--c)}
-.pct .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
-  font-weight:650;margin-top:6px}
-.pct .n{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:3px}
+.mix{margin-top:12px}
+.mixrow{display:flex;align-items:center;gap:9px;padding:7px 0}
+.mixrow .sw{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.mixrow.extra .sw{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px color-mix(in srgb,var(--c) 55%,transparent)}
+.mixrow .ml{font-size:13px;flex:0 0 84px}
+.mixrow .mb{flex:1;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.mixrow .mb i{display:block;height:100%;background:var(--c);border-radius:4px}
+.mixrow .mv{font-family:var(--mono);font-size:13px;flex:0 0 38px;text-align:right}
+.mixrow .mn{font-family:var(--mono);font-size:11px;color:var(--dimmer);flex:0 0 22px;text-align:right}
 .row{margin-top:15px}
 .row .rl{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:6px}
 .row .rl b{font-weight:620} .row .rl span{font-family:var(--mono);font-size:12px;color:var(--dim)}
@@ -213,8 +215,9 @@ nav button.on .ind{background:var(--text)}
 .sheet{position:fixed;left:max(0px,calc(50% - 215px));right:max(0px,calc(50% - 215px));bottom:0;z-index:60;
   background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   padding:8px var(--pad) calc(20px + env(safe-area-inset-bottom));
-  transform:translateY(102%);transition:transform .24s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow:auto}
-.sheet.open{transform:translateY(0)}
+  transform:translateY(102%);pointer-events:none;
+  transition:transform .24s cubic-bezier(.32,.72,0,1);max-height:90vh;overflow:auto}
+.sheet.open{transform:translateY(0);pointer-events:auto}
 .handle{width:36px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 15px}
 .sheet h2{margin:0 0 3px;font-size:19px;font-weight:680;letter-spacing:-.01em}
 .sheet .meta{font-size:12px;color:var(--dim);font-family:var(--mono);margin-bottom:4px;letter-spacing:.04em}
@@ -228,12 +231,13 @@ nav button.on .ind{background:var(--text)}
   bottom:calc(84px + env(safe-area-inset-bottom));z-index:70;
   background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:13px 15px;
   display:flex;align-items:center;gap:12px;
-  transform:translateY(140%);opacity:0;transition:transform .26s cubic-bezier(.32,.72,0,1),opacity .2s}
+  transform:translateY(140%);opacity:0;pointer-events:none;
+  transition:transform .26s cubic-bezier(.32,.72,0,1),opacity .2s}
 .toast.open{transform:translateY(0);opacity:1}
 .toast .txt{flex:1;font-size:14px;min-width:0}
 .toast .txt .tm{font-family:var(--mono);color:var(--dim);font-size:12px;display:block;margin-top:2px}
 .toast button{font-size:14px;font-weight:650;color:var(--text);flex:0 0 auto;
-  padding:8px 12px;background:var(--line);border-radius:9px}
+  padding:8px 12px;background:var(--line);border-radius:9px;pointer-events:auto}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -267,16 +271,19 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
 const SCHEMA_VERSION = 1;
 const EDIT_WINDOW = 31;  /* days back you are allowed to fill in or change */
 
 const RATINGS = {
-  green:  {label:"Green",  sub:"Good",  hex:"#56A06B", cls:"g", score:2},
-  yellow: {label:"Yellow", sub:"Mixed", hex:"#E3A63F", cls:"y", score:1},
-  red:    {label:"Red",    sub:"Rough", hex:"#C4605A", cls:"r", score:0}
+  xgreen: {label:"Extra green", sub:"One of the best", hex:"#3FD07A", cls:"gg", extra:true},
+  green:  {label:"Green",       sub:"Good",           hex:"#56A06B", cls:"g"},
+  yellow: {label:"Yellow",      sub:"Mixed",          hex:"#E3A63F", cls:"y"},
+  red:    {label:"Red",         sub:"Rough",          hex:"#C4605A", cls:"r"},
+  xred:   {label:"Extra red",   sub:"One of the worst",hex:"#F2453D", cls:"rr", extra:true}
 };
-const RORDER = ["green","yellow","red"];
+const RORDER = ["xgreen","green","yellow","red","xred"];
+const isGood = r => r === "green" || r === "xgreen";
 
 const REASONS = {
   me:     {label:"Me",        sub:"Something in me — mood, choices, headspace", hex:"#8A79C6"},
@@ -388,6 +395,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
 function daysSince(iso){ return iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null; }
 function buzz(){ try { navigator.vibrate && navigator.vibrate(8); } catch(e){} }
 const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+const zeroed = keys => keys.reduce((o,k) => (o[k] = 0, o), {});
 
 /* ================= writing ================= */
 function putDay(date, rating, reason, note){
@@ -446,16 +454,16 @@ function loadDraft(){
   const e = index.get(logDate);
   draft = e ? {rating:e.rating, reason:e.reason, note:e.note || ""} : {rating:null, reason:null, note:""};
 }
-function ratesHTML(sel, tight){
-  return '<div class="rates' + (tight ? " tight" : "") + '">' + RORDER.map(r =>
-    '<button class="rate' + (sel === r ? " on" : "") + '" data-r="' + r + '"' +
-      ' style="--c:' + RATINGS[r].hex + '">' +
+function ratesHTML(sel){
+  return '<div class="rates">' + RORDER.map(r =>
+    '<button class="rate' + (sel === r ? " on" : "") + (RATINGS[r].extra ? " extra" : "") +
+      '" data-r="' + r + '" style="--c:' + RATINGS[r].hex + '">' +
       '<span class="swatch"></span>' +
-      '<span><span class="lbl">' + RATINGS[r].label + '</span>' +
+      '<span class="t"><span class="lbl">' + RATINGS[r].label + '</span>' +
       '<span class="sub">' + RATINGS[r].sub + '</span></span></button>').join("") + '</div>';
 }
-function chipsHTML(sel, enabled, tight){
-  return '<div class="chips' + (tight ? " tight" : "") + (enabled ? "" : " off") + '">' +
+function chipsHTML(sel, enabled){
+  return '<div class="chips' + (enabled ? "" : " off") + '">' +
     XORDER.map(x =>
       '<button class="chip' + (sel === x ? " on" : "") + '" data-x="' + x + '"' +
         ' style="--c:' + REASONS[x].hex + '">' +
@@ -499,8 +507,8 @@ function renderLog(){
     return;
   }
 
-  const tiles = ratesHTML(draft.rating, false);
-  const chips = chipsHTML(draft.reason, !!draft.rating, false);
+  const tiles = ratesHTML(draft.rating);
+  const chips = chipsHTML(draft.reason, !!draft.rating);
   const ready = draft.rating && draft.reason;
   view.innerHTML = sel +
     '<div class="picked">' + fmtDay(logDate) +
@@ -586,7 +594,7 @@ function renderHistory(){
 
   let cells = "";
   for(let i = 0; i < pad; i++) cells += '<div class="pad"></div>';
-  const counts = {green:0, yellow:0, red:0}; let logged = 0, elapsed = 0;
+  const counts = zeroed(RORDER); let logged = 0, elapsed = 0;
   for(let d = 1; d <= dim; d++){
     const k = keyOf(new Date(calY, calM, d));
     const e = index.get(k), future = agoOf(k) < 0;
@@ -611,16 +619,18 @@ function renderHistory(){
     '<div class="wdays"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>' +
     '<div class="cal">' + cells + '</div>' +
     '<div class="legend">' +
-      RORDER.map(r => '<div><i style="border-radius:50%;background:' + RATINGS[r].hex + '"></i>' + RATINGS[r].label + '</div>').join("") +
+      RORDER.map(r => '<div style="color:' + RATINGS[r].hex + '"><i class="' +
+        (RATINGS[r].extra ? "halo" : "") + '" style="border-radius:50%;background:' + RATINGS[r].hex +
+        '"></i><span style="color:var(--dim)">' + RATINGS[r].label + '</span></div>').join("") +
       '<div><i style="border-radius:50%;background:var(--surface);border:1px solid var(--line)"></i>Not logged</div>' +
     '</div>' +
     '<div class="sec"><div class="sechead"><div class="eyebrow">This month</div>' +
       '<div class="eyebrow">' + logged + ' of ' + elapsed + ' days logged</div></div>' +
-      (logged ? splitBar(counts, logged) + pctCards(counts, logged)
+      (logged ? splitBar(counts, logged) + mixRows(counts, logged)
               : '<div class="empty">Nothing logged this month yet.</div>') +
     '</div>' +
-    '<div class="hint" style="margin-top:18px">Tap a day to see it. The last ' + EDIT_WINDOW +
-      ' days can still be changed right there.</div>';
+    '<div class="hint" style="margin-top:18px">Tap a day to see what you put down. ' +
+      'Changes are made on the Log tab.</div>';
 
   document.getElementById("pm").onclick = () => {
     calM--; if(calM < 0){ calM = 11; calY--; } renderHistory();
@@ -681,12 +691,14 @@ function splitBar(counts, total){
     '<i style="width:' + (total ? counts[r] / total * 100 : 0) + '%;background:' + RATINGS[r].hex + '"></i>'
   ).join("") + '</div>';
 }
-function pctCards(counts, total){
-  return '<div class="pcts">' + RORDER.map(r =>
-    '<div class="pct" style="--c:' + RATINGS[r].hex + '">' +
-      '<div class="v">' + pct(counts[r], total) + '%</div>' +
-      '<div class="k">' + RATINGS[r].label + '</div>' +
-      '<div class="n">' + counts[r] + ' ' + (counts[r] === 1 ? "day" : "days") + '</div></div>'
+function mixRows(counts, total){
+  return '<div class="mix">' + RORDER.map(r =>
+    '<div class="mixrow' + (RATINGS[r].extra ? " extra" : "") + '" style="--c:' + RATINGS[r].hex + '">' +
+      '<i class="sw"></i>' +
+      '<span class="ml">' + RATINGS[r].label + '</span>' +
+      '<span class="mb"><i style="width:' + (total ? counts[r] / total * 100 : 0) + '%"></i></span>' +
+      '<span class="mv">' + pct(counts[r], total) + '%</span>' +
+      '<span class="mn">' + counts[r] + '</span></div>'
   ).join("") + '</div>';
 }
 function trackRow(title, right, parts, keyDefs, total){
@@ -717,11 +729,10 @@ function renderCharts(){
     return;
   }
 
-  const counts = {green:0, yellow:0, red:0};
-  const rCounts = {me:0, others:0, health:0};
-  const byRating = {green:{me:0,others:0,health:0}, yellow:{me:0,others:0,health:0}, red:{me:0,others:0,health:0}};
-  const byReason = {me:{green:0,yellow:0,red:0}, others:{green:0,yellow:0,red:0}, health:{green:0,yellow:0,red:0}};
-  const wd = [0,1,2,3,4,5,6].map(() => ({green:0,yellow:0,red:0,n:0}));
+  const counts = zeroed(RORDER), rCounts = zeroed(XORDER);
+  const byRating = {}; RORDER.forEach(r => byRating[r] = zeroed(XORDER));
+  const byReason = {}; XORDER.forEach(x => byReason[x] = zeroed(RORDER));
+  const wd = [0,1,2,3,4,5,6].map(() => Object.assign(zeroed(RORDER), {n:0}));
   rows.forEach(e => {
     counts[e.rating]++; rCounts[e.reason]++;
     byRating[e.rating][e.reason]++; byReason[e.reason][e.rating]++;
@@ -736,28 +747,30 @@ function renderCharts(){
   const all = entries.filter(e => !e.deleted_at).slice().sort((a,b) => a.date.localeCompare(b.date));
   let best = 0, run = 0, prev = null;
   all.forEach(e => {
-    run = (e.rating === "green" && prev && e.date === shiftKey(prev, 1)) ? run + 1
-        : (e.rating === "green" ? 1 : 0);
+    run = (isGood(e.rating) && prev && e.date === shiftKey(prev, 1)) ? run + 1
+        : (isGood(e.rating) ? 1 : 0);
     if(run > best) best = run;
     prev = e.date;
   });
   let cur = 0, walk = index.has(todayKey()) ? todayKey() : shiftKey(todayKey(), -1);
   while(true){
     const e = index.get(walk);
-    if(!e || e.rating !== "green") break;
+    if(!e || !isGood(e.rating)) break;
     cur++; walk = shiftKey(walk, -1);
   }
+  const goodDays = RORDER.filter(isGood).reduce((n,r) => n + counts[r], 0);
+  const badDays  = counts.red + counts.xred;
   const span = RANGES.find(x => x.k === range).days ||
     (all.length ? Math.round((dateOf(todayKey()) - dateOf(all[0].date)) / 86400000) + 1 : 0);
   const wdMax = Math.max(1, ...wd.map(w => w.n));
   const topReason = XORDER.slice().sort((a,b) => rCounts[b] - rCounts[a])[0];
-  const greenTop = XORDER.slice().sort((a,b) => byRating.green[b] - byRating.green[a])[0];
-  const redTop = XORDER.slice().sort((a,b) => byRating.red[b] - byRating.red[a])[0];
+  const topFor = r => XORDER.slice().sort((a,b) => byRating[r][b] - byRating[r][a])[0];
+  const greenTop = topFor("green"), redTop = topFor("red");
 
   view.innerHTML = bar +
     '<div class="sec"><div class="sechead"><div class="eyebrow">Day mix</div>' +
       '<div class="eyebrow">' + total + ' logged</div></div>' +
-      splitBar(counts, total) + pctCards(counts, total) + '</div>' +
+      splitBar(counts, total) + mixRows(counts, total) + '</div>' +
 
     '<div class="sec"><div class="sechead"><div class="eyebrow">Behind each colour</div></div>' +
       '<div class="card">' +
@@ -785,9 +798,9 @@ function renderCharts(){
     '<div class="sec"><div class="sechead"><div class="eyebrow">Numbers</div></div>' +
       '<div class="stats">' +
       '<div class="stat"><div class="v" style="color:var(--green)">' + cur + '</div>' +
-        '<div class="k">Green streak now</div></div>' +
+        '<div class="k">Good streak now</div></div>' +
       '<div class="stat"><div class="v" style="color:var(--green)">' + best + '</div>' +
-        '<div class="k">Longest green streak</div></div>' +
+        '<div class="k">Longest good streak</div></div>' +
       '<div class="stat"><div class="v">' + pct(total, span) + '%</div>' +
         '<div class="k">Days logged in range</div></div>' +
       '<div class="stat"><div class="v">' + all.length + '</div>' +
@@ -796,11 +809,14 @@ function renderCharts(){
 
     '<div class="sec"><div class="card"><h3>The short version</h3><p>' +
       'Over ' + (RANGES.find(x => x.k === range).days ? "the last " + RANGES.find(x => x.k === range).label : "everything logged") +
-      ', <b>' + pct(counts.green, total) + '%</b> of your days came out green. ' +
+      ', <b>' + pct(goodDays, total) + '%</b> of your days came out green or better' +
+      (counts.xgreen ? ', including ' + counts.xgreen + ' you called extra green' : '') + '. ' +
       REASONS[topReason].label + ' is the reason you point at most often (' +
       pct(rCounts[topReason], total) + '% of days). ' +
       (counts.green ? "Green days are usually down to " + REASONS[greenTop].label.toLowerCase() + ". " : "") +
-      (counts.red ? "Red days are usually down to " + REASONS[redTop].label.toLowerCase() + "." : "No red days in this range.") +
+      (counts.red ? "Red days are usually down to " + REASONS[redTop].label.toLowerCase() + ". " : "") +
+      (counts.xred ? counts.xred + " day" + (counts.xred === 1 ? " was" : "s were") + " extra red." :
+        (badDays ? "" : "Nothing landed in the red.")) +
       '</p></div></div>';
 
   view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });

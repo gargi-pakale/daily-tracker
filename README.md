@@ -1,7 +1,9 @@
 # Days
 
-A private daily tracker. Log each day green, yellow or red, say what drove it —
-me, others, or my health — and add a comment if it's worth remembering.
+A private daily tracker. Rate each day on five levels — extra green, green,
+yellow, red, extra red — say what drove it (me, others, or my health) and add a
+comment if it's worth remembering. The two extremes are drawn brighter and
+ringed in the calendar so standout days are obvious at a glance.
 
 Three tabs: **Log** (today or any day in the last month), **History** (a
 read-only month calendar painted by colour), **Charts** (the split, what sits
