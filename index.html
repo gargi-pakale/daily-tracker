@@ -45,6 +45,9 @@ header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bott
 .banner button{color:#F0C989;text-decoration:underline;font-size:13px;flex:0 0 auto}
 
 main{padding:0 var(--pad)}
+.pane{display:none}
+.pane.on{display:block}
+button,.cell{touch-action:manipulation}
 .sec{margin-top:24px}
 .sechead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px}
@@ -241,7 +244,11 @@ nav button.on .ind{background:var(--text)}
 </header>
 
 <div id="banners"></div>
-<main id="view"></main>
+<main>
+  <section class="pane on" id="pane-log"></section>
+  <section class="pane" id="pane-history"></section>
+  <section class="pane" id="pane-charts"></section>
+</main>
 
 <nav>
   <button data-tab="log" class="on"><span class="ind"></span>Log</button>
@@ -255,7 +262,7 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.1.0";
 const SCHEMA_VERSION = 1;
 const EDIT_WINDOW = 7;   /* days back you are allowed to fill in or change */
 
@@ -329,6 +336,7 @@ function reindex(){
 function save(){
   entries = mergeSets(entries, []);   /* one row per date, newest wins */
   reindex();
+  stale.log = stale.history = stale.charts = true;   /* whoever is on screen refreshes itself */
   lsSet(LS_KEY, entries); lsSet(LS_META, meta);
   idbPut("entries", entries); idbPut("meta", meta);
 }
@@ -398,8 +406,15 @@ function clearDay(date){
 }
 
 /* ================= chrome ================= */
+/* Each tab keeps its own pane in the DOM. Switching toggles visibility instead of
+   tearing the view down, so nothing reflows and scroll position survives. */
 let tab = "log";
-const view = document.getElementById("view");
+const PANE = {log:      document.getElementById("pane-log"),
+              history:  document.getElementById("pane-history"),
+              charts:   document.getElementById("pane-charts")};
+const stale     = {log:false, history:true, charts:true};
+const scrollMem = {log:0, history:0, charts:0};
+function refreshCurrent(){ RENDER[tab](); stale[tab] = false; }
 
 function renderHeader(){
   document.getElementById("dateLine").textContent =
@@ -443,6 +458,7 @@ function chipsHTML(sel, enabled, tight){
 }
 
 function renderLog(){
+  const view = PANE.log;
   let sel = '<div class="dsel">';
   for(let i = EDIT_WINDOW; i >= 0; i--){
     const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
@@ -466,41 +482,59 @@ function renderLog(){
     '<textarea id="nt" placeholder="Anything worth remembering about this day">' + esc(draft.note) + '</textarea>' +
     '<button class="btn primary" id="sv"' + (ready ? "" : " disabled") + '>' +
       (existing ? "Update this day" : "Save this day") + '</button>' +
-    (existing ? '<button class="btn danger" id="rm">Remove this entry</button>' : '') +
+    '<button class="btn danger" id="rm"' + (existing ? '' : ' hidden') + '>Remove this entry</button>' +
     '<div class="hint">You can fill in or change any of the last ' + EDIT_WINDOW +
       ' days. Older days are locked so the history stays honest.</div>';
 
   view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => {
     logDate = b.dataset.d; loadDraft(); renderLog();
   });
+  /* Selection only flips classes — the comment box is never rebuilt, so the
+     keyboard and caret survive tapping a colour or a reason mid-sentence. */
   view.querySelectorAll(".rate").forEach(b => b.onclick = () => {
-    buzz(); draft.note = document.getElementById("nt").value;
-    draft.rating = (draft.rating === b.dataset.r) ? null : b.dataset.r; renderLog();
+    buzz(); draft.rating = (draft.rating === b.dataset.r) ? null : b.dataset.r; syncLog();
   });
   view.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-    buzz(); draft.note = document.getElementById("nt").value;
-    draft.reason = (draft.reason === b.dataset.x) ? null : b.dataset.x; renderLog();
+    buzz(); draft.reason = (draft.reason === b.dataset.x) ? null : b.dataset.x; syncLog();
   });
-  document.getElementById("nt").addEventListener("input", ev => { draft.note = ev.target.value; });
-  document.getElementById("sv").onclick = () => {
+  view.querySelector("#nt").addEventListener("input", ev => { draft.note = ev.target.value; });
+  view.querySelector("#sv").onclick = () => {
     if(!draft.rating || !draft.reason) return;
-    putDay(logDate, draft.rating, draft.reason, document.getElementById("nt").value);
-    buzz(); renderHeader(); renderBanners(); renderLog();
+    putDay(logDate, draft.rating, draft.reason, view.querySelector("#nt").value);
+    buzz(); renderHeader(); renderBanners(); syncLog(); stale.log = false;
     toast(fmtDay(logDate) + " saved",
       RATINGS[draft.rating].label + " · " + REASONS[draft.reason].label);
   };
-  const rm = document.getElementById("rm");
-  if(rm) rm.onclick = () => {
+  view.querySelector("#rm").onclick = () => {
     if(!confirm("Remove the entry for " + fmtDay(logDate) + "?")) return;
-    clearDay(logDate); loadDraft(); renderHeader(); renderBanners(); renderLog();
+    clearDay(logDate); loadDraft(); renderHeader(); renderBanners(); renderLog(); stale.log = false;
     toast("Entry removed", fmtShort(logDate));
   };
+}
+
+/* in-place update of everything on the Log pane that depends on state */
+function syncLog(){
+  const view = PANE.log, existing = index.get(logDate);
+  view.querySelectorAll(".rate").forEach(b => b.classList.toggle("on", b.dataset.r === draft.rating));
+  view.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b.dataset.x === draft.reason));
+  view.querySelector(".chips").classList.toggle("off", !draft.rating);
+  const sv = view.querySelector("#sv");
+  sv.disabled = !(draft.rating && draft.reason);
+  sv.textContent = existing ? "Update this day" : "Save this day";
+  view.querySelector("#rm").hidden = !existing;
+  view.querySelector(".picked span").textContent =
+    existing ? "ALREADY LOGGED · EDITING" : "NOT LOGGED YET";
+  view.querySelectorAll(".dsel button").forEach(b => {
+    const e = index.get(b.dataset.d);
+    b.querySelector(".pip").className = "pip " + (e ? RATINGS[e.rating].cls : "");
+  });
 }
 
 /* ================= HISTORY TAB ================= */
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 
 function renderHistory(){
+  const view = PANE.history;
   const first = new Date(calY, calM, 1);
   const pad = first.getDay();
   const dim = new Date(calY, calM+1, 0).getDate();
@@ -570,10 +604,6 @@ function daySheet(k){
   openSheet(daySheetHTML());
   bindDaySheet();
 }
-function paintDaySheet(){
-  sheet.innerHTML = '<div class="handle"></div>' + daySheetHTML();
-  bindDaySheet();
-}
 function daySheetHTML(){
   const k = sheetKey, e = index.get(k);
   const head = '<h2>' + fmtDay(k) + '</h2><div class="meta">' +
@@ -603,7 +633,7 @@ function daySheetHTML(){
       esc(sheetDraft.note) + '</textarea>' +
     '<button class="btn primary" id="ssv"' + (ready ? "" : " disabled") + '>' +
       (e ? "Update this day" : "Save this day") + '</button>' +
-    (e ? '<button class="btn danger" id="srm">Remove this entry</button>' : '') +
+    '<button class="btn danger" id="srm"' + (e ? '' : ' hidden') + '>Remove this entry</button>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
 }
 function bindDaySheet(){
@@ -611,14 +641,12 @@ function bindDaySheet(){
   if(!nt) return;                       /* locked day — read-only, nothing to bind */
   nt.addEventListener("input", ev => { sheetDraft.note = ev.target.value; });
   sheet.querySelectorAll(".rate").forEach(b => b.onclick = () => {
-    buzz(); sheetDraft.note = nt.value;
-    sheetDraft.rating = (sheetDraft.rating === b.dataset.r) ? null : b.dataset.r;
-    paintDaySheet();
+    buzz(); sheetDraft.rating = (sheetDraft.rating === b.dataset.r) ? null : b.dataset.r;
+    syncSheet();
   });
   sheet.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-    buzz(); sheetDraft.note = nt.value;
-    sheetDraft.reason = (sheetDraft.reason === b.dataset.x) ? null : b.dataset.x;
-    paintDaySheet();
+    buzz(); sheetDraft.reason = (sheetDraft.reason === b.dataset.x) ? null : b.dataset.x;
+    syncSheet();
   });
   document.getElementById("ssv").onclick = () => {
     if(!sheetDraft.rating || !sheetDraft.reason) return;
@@ -626,16 +654,23 @@ function bindDaySheet(){
     buzz(); afterSheetWrite(fmtDay(sheetKey) + " saved",
       RATINGS[sheetDraft.rating].label + " · " + REASONS[sheetDraft.reason].label);
   };
-  const rm = document.getElementById("srm");
-  if(rm) rm.onclick = () => {
+  document.getElementById("srm").onclick = () => {
     if(!confirm("Remove the entry for " + fmtDay(sheetKey) + "?")) return;
     clearDay(sheetKey); afterSheetWrite("Entry removed", fmtShort(sheetKey));
   };
 }
+
+/* same in-place update as the Log pane, so the sheet's comment box survives */
+function syncSheet(){
+  sheet.querySelectorAll(".rate").forEach(b => b.classList.toggle("on", b.dataset.r === sheetDraft.rating));
+  sheet.querySelectorAll(".chip").forEach(b => b.classList.toggle("on", b.dataset.x === sheetDraft.reason));
+  sheet.querySelector(".chips").classList.toggle("off", !sheetDraft.rating);
+  document.getElementById("ssv").disabled = !(sheetDraft.rating && sheetDraft.reason);
+}
 function afterSheetWrite(msg, sub){
   closeSheet();
   if(sheetKey === logDate) loadDraft();
-  renderHeader(); renderBanners(); RENDER[tab]();
+  renderHeader(); renderBanners(); refreshCurrent();
   toast(msg, sub);
 }
 
@@ -680,6 +715,7 @@ function ratingKey(){
 }
 
 function renderCharts(){
+  const view = PANE.charts;
   const rows = inRange();
   const total = rows.length;
   const bar = '<div class="rangebar">' + RANGES.map(r =>
@@ -783,10 +819,13 @@ function renderCharts(){
 /* ================= nav ================= */
 const RENDER = {log:renderLog, history:renderHistory, charts:renderCharts};
 function go(t){
+  const same = (t === tab);
+  if(!same) scrollMem[tab] = window.scrollY;
   tab = t;
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
-  renderHeader(); renderBanners(); RENDER[t]();
-  window.scrollTo(0,0);
+  for(const k in PANE) PANE[k].classList.toggle("on", k === t);
+  if(stale[t]){ RENDER[t](); stale[t] = false; }
+  if(!same) window.scrollTo(0, scrollMem[t] || 0);
 }
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => go(b.dataset.tab)));
 
@@ -875,7 +914,7 @@ function importJSON(ev){
       entries = mergeSets(entries, incoming);
       save(); loadDraft(); renderHeader(); renderBanners();
       alert("Restored. " + (entries.length - before) + " new days added, " + entries.length + " total.");
-      closeSheet(); go(tab);
+      closeSheet(); refreshCurrent();
     } catch(e){ logErr("import", e); alert("Could not read that file: " + e.message); }
     ev.target.value = "";
   };
@@ -893,12 +932,14 @@ function forceUpdate(){
 window.addEventListener("error", ev => logErr("uncaught", ev.error || ev.message));
 document.addEventListener("visibilitychange", () => {
   /* midnight rollover while the app sat open */
-  if(!document.hidden && logDate !== todayKey() && agoOf(logDate) < 0){ logDate = todayKey(); loadDraft(); }
-  if(!document.hidden && tab === "log") renderLog();
+  if(document.hidden) return;
+  if(agoOf(logDate) < 0){ logDate = todayKey(); loadDraft(); stale.log = true; }
+  if(stale[tab]) refreshCurrent();
 });
 load().then(() => {
   loadDraft();
-  go("log");
+  renderHeader(); renderBanners();
+  renderLog(); stale.log = false;
   if("serviceWorker" in navigator){
     navigator.serviceWorker.register("sw.js").catch(e => logErr("sw", e));
   }
