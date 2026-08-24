@@ -1,9 +1,10 @@
 # Days — setup
 
 Rate every day, and every night, on five levels — extra green, green, yellow,
-red, extra red — say what drove it, and watch the pattern show up. The switch at
-the top left moves between the **Days** tracker and the **Sleep** tracker.
-Everything stays on your phone. No account, no server, no one else.
+red, extra red — say what drove it, log what you actually did, and watch the
+pattern show up. The switch at the top left moves between the **Sleep**,
+**Habits** and **Days** trackers. Everything stays on your phone. No account, no
+server, no one else.
 
 ## Put it online (once, on a computer)
 
@@ -27,10 +28,10 @@ will not appear in the Home Screen app — they are separate storage.
 
 ## How it works
 
-**Switching tracker** — the pill at the top left is Days / Sleep. Each keeps its
-own entries, its own reasons, its own calendar and its own charts; only the five
-colours and the backup file are shared. On the Sleep tracker a night belongs to the day it ended
-on, so this morning's sleep goes under today.
+**Switching tracker** — the pill at the top left is Sleep / Habits / Days. Each
+keeps its own entries, its own calendar and its own charts; only the backup file
+and the storage underneath are shared. On the Sleep tracker a night belongs to
+the day it ended on, so this morning's sleep goes under today.
 
 **Log** — the strip along the top is the last week, each day painted its own
 colour so you can see the run you are on. Tap a day to work on it: pick a level,
@@ -43,6 +44,24 @@ colour, what drove it, and the comment. Changing it takes a deliberate tap on
 **Change this day**, so a stray touch can never rewrite it. There is only ever
 one entry per date per tracker.
 
+**Habits** works differently, because it logs things that happened rather than
+rating the day. Five tiles — Caffeine, Exercise, Sugar, Meal, Nap — each showing
+how many you have logged today. Tap one, pick from the chips, save. Tap it again
+for the second tea; the count is just how many you logged, so there is no number
+to type. **Save and add another** keeps the sheet open, which is what you want
+when you are catching up on a whole day at once.
+
+The app never guesses when something happened from the clock — you will often be
+logging at night, especially travelling. So caffeine asks for the time of day,
+meals ask breakfast / lunch / dinner / snack / late snack, and naps ask before or
+after 3pm. The chips come pre-selected from the current time, so logging as it
+happens is no extra work and logging late is one tap.
+
+**Naps go under Habits, not Sleep.** A nap happens long after you have logged the
+night, and it belongs with the caffeine and the exercise that shape the *next*
+night. Your sleep entry still shows the previous day's nap as a line underneath,
+so you see it where you would expect to.
+
 **How long a day stays open depends on the tracker.**
 
 On **Days**, the last 7 can be filled in or changed, as they always could.
@@ -54,7 +73,14 @@ confirm first. A saved night can only be changed on the day it belongs to; after
 that it reads **LOGGED · LOCKED** and there is no way back in. A blank night
 older than three days reads **CLOSED** and cannot be filled in at all.
 
-**History** — a month at a time, each day a circle painted its colour. A small
+On **Habits** it is the same three days, read for a log rather than an entry: you
+can add to today and the two days before it, but anything already written can
+only be changed on its own day. So you can always catch up, and you can never
+tidy up.
+
+**History** — a month at a time, each day a circle painted its colour. On Habits
+there is no colour to paint with, so each day carries a small dot per habit you
+logged, and the month underneath counts how often each one happened. A small
 dot under the number means you left a comment. **Today** jumps back to the
 current month. Extra green and extra red days are drawn brighter and ringed, so
 the standout days catch your eye as you scan the month. Tapping a day shows you
@@ -64,6 +90,18 @@ happen on the Log tab.
 **Charts** — pick a range, then: your green/yellow/red split, which reason sits
 behind each colour, how each reason tends to turn out, how the days of the week
 compare, streaks, and a plain-English summary at the bottom.
+
+On **Habits**, Charts shows how often each habit happens and how it breaks down —
+when the caffeine lands, how the meals split, how hard the exercise was — and
+then the part all of this is for: **how your habits line up with your sleep and
+your days.** A night is matched to the day *before* it, since that is the day
+that caused it; a day is matched to itself. Each comparison shows both sides with
+their counts, so you can see how much it rests on.
+
+Nothing shows up there until you have 14 days with both logged, and each
+comparison needs 8 days either way before it appears. Give it a month before you
+read much into it — with a dozen comparisons, one or two will look striking by
+pure chance.
 
 ## Rules that keep the data alive
 
