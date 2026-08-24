@@ -53,6 +53,11 @@ header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bott
   letter-spacing:-.01em;color:var(--dim);transition:background .16s ease,color .16s ease}
 .tsw button.on{background:var(--surface2);color:var(--text)}
 .tsw button:not(.on):active{background:var(--bg)}
+/* three trackers plus the DATA button is about 292px of header; on a 320px
+   phone that overflows by a few pixels, so the pill tightens rather than wraps */
+@media (max-width:360px){
+  .tsw button{padding:8px 11px;font-size:13px;letter-spacing:-.02em}
+}
 .who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em;
   display:inline-flex;align-items:center;gap:6px}
 .badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;
@@ -226,6 +231,65 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
   font-weight:650;margin-top:7px;line-height:1.4}
 
+/* ---- habits: tiles, chip groups, instance rows, dots ---- */
+/* The habits tracker logs events rather than rating a day, so it gets its own
+   furniture. Everything else on the pane — .picked, .sec, .card, .hint — is
+   shared with the two rating trackers. */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.tile{display:flex;align-items:center;gap:10px;padding:13px 13px;border-radius:13px;
+  background:var(--surface);border:1px solid var(--line);text-align:left;
+  transition:transform .09s ease,border-color .16s ease}
+.tile:active{transform:scale(.97)}
+.tile.wide{grid-column:1 / -1}
+.tile .sw{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.tile .t{flex:1;min-width:0}
+.tile .lbl{display:block;font-size:14.5px;font-weight:620;letter-spacing:-.01em}
+.tile .sub{display:block;font-size:10.5px;color:var(--dimmer);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tally{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--c);flex:0 0 auto}
+.tile .tally.zero{color:var(--dimmer);opacity:.5}
+.tiles.off .tile{opacity:.4;pointer-events:none}
+
+/* chip groups inside the logging sheet — a horizontal wrap, unlike the
+   full-width vertical .chips the rating trackers use */
+.cg{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.cg button{padding:10px 13px;border-radius:11px;background:var(--bg);
+  border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--dim)}
+.cg button:active{transform:scale(.97)}
+.cg button.on{background:var(--c);border-color:var(--c);color:#12151C}
+
+/* one logged instance, on the Log tab and in the History day sheet */
+.ilist{margin-top:10px}
+.irow{display:flex;align-items:center;gap:11px;width:100%;padding:11px 13px;margin-top:7px;
+  border-radius:12px;background:var(--surface);border:1px solid var(--line);text-align:left}
+.irow .pip{width:9px;height:9px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.irow .t{flex:1;min-width:0}
+.irow .t b{display:block;font-size:14px;font-weight:620;letter-spacing:-.01em}
+.irow .t i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px;
+  line-height:1.4}
+.irow .go{font-size:15px;color:var(--dimmer);flex:0 0 auto}
+.irow[disabled]{opacity:.72}
+
+/* dot clusters: the habits stand-in for a rating colour, on the Log strip and
+   in the calendar. One dot per kind logged that day, never per instance. */
+.hdots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:4px;min-height:5px}
+.hdots i{width:5px;height:5px;border-radius:50%;display:block}
+.dsel button .hdots{margin-top:5px}
+.cal .cell.hab{flex-direction:column;gap:0;font-size:12px}
+.cal .cell.hab.has{background:var(--surface2);color:var(--dim)}
+.cal .cell .hdots{margin-top:2px}
+
+/* correlation rows */
+.corr{margin-top:14px}
+.corr .ch{font-size:13.5px;font-weight:620;letter-spacing:-.01em;margin-bottom:8px}
+.cbar{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12.5px}
+.cbar .cl{flex:0 0 96px;color:var(--dim);line-height:1.3}
+.cbar .cm{flex:1;height:9px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.cbar .cm i{display:block;height:100%;background:var(--c);border-radius:5px}
+.cbar .cv{font-family:var(--mono);font-size:12.5px;flex:0 0 34px;text-align:right}
+.cbar .cn{font-family:var(--mono);font-size:10.5px;color:var(--dimmer);flex:0 0 30px;text-align:right}
+.gap{font-size:12px;color:var(--dimmer);margin-top:7px;line-height:1.45}
+
 /* ---- nav ---- */
 nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
@@ -282,6 +346,7 @@ nav button.on .ind{background:var(--text)}
   <div class="hrow">
     <div class="tsw" id="tsw">
       <button data-t="sleep">Sleep</button>
+      <button data-t="habits">Habits</button>
       <button data-t="days">Days</button>
     </div>
     <button class="who" id="gearBtn">DATA<span class="badge" id="gearBadge" hidden></span></button>
@@ -308,8 +373,9 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.9.1";
-const SCHEMA_VERSION = 2;   /* 2 adds `tracker` to every row; rows without one are days */
+const APP_VERSION = "1.10.0";
+const SCHEMA_VERSION = 3;   /* 2 adds `tracker` to every row; rows without one are days.
+                               3 adds habits rows, which carry `items` and no rating */
 const STRIP_DAYS = 7;                /* how much of the week the Log strip shows */
 const STRIP_BACK = STRIP_DAYS - 1;   /* ...expressed as days back */
 
@@ -350,6 +416,61 @@ const TRACKERS = {
                  phrase:"Ted shenanigans",     hex:"#B57BC9"}
     }
   },
+  /* Habits is a different animal: it logs events, not a verdict, so it carries
+     `kinds` instead of `reasons` and `mode:"log"` tells every renderer which
+     shape it is looking at. Nothing branches on the tracker's name. */
+  habits: {
+    label:"Habits", noun:"habit day", nounPl:"habit days", every:"every day",
+    backfill:3, change:1, mode:"log",
+    prompt:"What you did",
+    placeholder:"Anything worth remembering about today",
+    mix:"Habit mix",
+    hint:"Log habits under the day they happened on. A night is compared against the day before it.",
+    korder:["caffeine","exercise","sugar","meal","nap"],
+    kinds:{
+      caffeine:{
+        label:"Caffeine", sub:"Tea", hex:"#A2764F",
+        fields:[
+          {key:"tea",  label:"Which",  opts:[["green","Green tea"],["black","Black tea"]]},
+          {key:"oz",   label:"Size",   opts:[["8","8 oz"],["12","12 oz"],["16","16 oz"],["24","24 oz"]]},
+          {key:"slot", label:"When",   opts:[["pre10","Before 10am"],["t10_12","10–12"],
+                                             ["t12_15","12–3pm"],["post15","After 3pm"]], clock:"caf"}
+        ]
+      },
+      exercise:{
+        label:"Exercise", sub:"Session", hex:"#5CA86B",
+        fields:[
+          {key:"types",  label:"What", multi:true,
+           opts:[["run","Running"],["hike","Hiking"],["strength","Strength"],["pt","PT"],["other","Other"]]},
+          {key:"mins",   label:"How long", opts:[["u30","Under 30 min"],["m30_60","30–60 min"],["o60","Over 1 hr"]]},
+          {key:"effort", label:"Effort",   opts:[["easy","Easy"],["medium","Medium"],["hard","Hard"]]}
+        ]
+      },
+      sugar:{
+        label:"Sugar", sub:"Something sweet", hex:"#E3A63F",
+        fields:[
+          {key:"where",  label:"Where",  opts:[["home","Home"],["outside","Outside"]]},
+          {key:"amount", label:"How much", opts:[["low","Low"],["normal","Normal"],["high","High"]]}
+        ]
+      },
+      meal:{
+        label:"Meal", sub:"Breakfast to late snack", hex:"#5B8ED8",
+        fields:[
+          {key:"meal",    label:"Which", clock:"meal",
+           opts:[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],
+                 ["snack","Snack"],["late","Late snack"]]},
+          {key:"protein", label:"Protein in it", opts:[["yes","Yes"],["no","No"]]}
+        ]
+      },
+      nap:{
+        label:"Nap", sub:"Daytime sleep", hex:"#7C6FD0",
+        fields:[
+          {key:"mins", label:"How long", opts:[["u30","Under 30 min"],["m30_60","30–60 min"],["o60","Over 1 hr"]]},
+          {key:"slot", label:"When", opts:[["pre15","Before 3pm"],["post15","After 3pm"]], clock:"nap"}
+        ]
+      }
+    }
+  },
   days: {
     label:"Days", noun:"day", nounPl:"days", every:"every day", backfill:7, change:7,
     prompt:"What drove it",
@@ -375,11 +496,20 @@ const T = () => TRACKERS[tracker];
    without threading it through */
 let REASONS = TRACKERS.sleep.reasons;
 let XORDER  = TRACKERS.sleep.order;
+/* the habits tracker has neither, so both fall back to empty rather than
+   undefined — anything that reads them stays safe without asking which
+   tracker is on screen */
+let KINDS  = {};
+let KORDER = [];
 const knownReason = x => Object.prototype.hasOwnProperty.call(REASONS, x);
 const reasonPhrase = x => !knownReason(x) ? "a reason no longer on the list"
   : (REASONS[x].phrase || REASONS[x].label.toLowerCase());
+/* true for a tracker that logs events instead of rating the day */
+const isLog = t => (TRACKERS[t || tracker].mode === "log");
 function applyTracker(t){
-  tracker = t; REASONS = T().reasons; XORDER = T().order;
+  tracker = t;
+  REASONS = T().reasons || {}; XORDER = T().order  || [];
+  KINDS   = T().kinds   || {}; KORDER = T().korder || [];
 }
 
 /* ================= storage ================= */
@@ -542,6 +672,61 @@ function clearDay(date){
   return true;
 }
 
+/* ---- habits: one row per date holding an array of instances ----
+   The row shape has to stay one-per-date because mergeSets keys on
+   tracker|date; a row per instance would collapse a day's five meals into one
+   on every restore. So instances live in `items` and the row is the day. */
+const itemsOf = k => { const e = index.get(k); return (e && Array.isArray(e.items)) ? e.items : []; };
+const knownKind = x => Object.prototype.hasOwnProperty.call(KINDS, x);
+/* instances of kinds this build no longer defines are kept and counted, but
+   cannot be summarised — same treatment retired reasons get */
+const liveItems = k => itemsOf(k).filter(it => knownKind(it.kind));
+const kindsOn = k => KORDER.filter(x => liveItems(k).some(it => it.kind === x));
+function newId(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+/* Adding is allowed anywhere in the backfill window — unlike the rating
+   trackers there is no such thing as a "blank" date, since another instance
+   can always be added. Changing what is already down stays same-day only. */
+const canAddItem  = k => within(k, backfillDays());
+const canEditItem = k => within(k, changeDays());
+
+function putItem(date, item){
+  if(!canAddItem(date)) return false;             /* never trust the button alone */
+  const now = new Date().toISOString();
+  let row = entries.find(e => e.date === date && trackerOf(e) === tracker);
+  if(!row){
+    row = {tracker:tracker, date:date, items:[], note:"",
+           created_at:now, updated_at:now, deleted_at:null, schema_version:SCHEMA_VERSION};
+    entries.push(row);
+  }
+  if(!Array.isArray(row.items)) row.items = [];
+  const at = row.items.findIndex(x => x.id === item.id);
+  if(at >= 0) {
+    if(!canEditItem(date)) return false;          /* editing is the tighter permission */
+    row.items[at] = item;
+  } else {
+    row.items.push(Object.assign({id:newId(), created_at:now}, item));
+  }
+  row.deleted_at = null; row.updated_at = now;
+  save();
+  return true;
+}
+function removeItem(date, id){
+  if(!canEditItem(date)) return false;            /* removing is a change */
+  const row = index.get(date);
+  if(!row || !Array.isArray(row.items)) return false;
+  const at = row.items.findIndex(x => x.id === id);
+  if(at < 0) return false;
+  row.items.splice(at, 1);
+  row.updated_at = new Date().toISOString();
+  /* a day emptied of every instance is a day with nothing logged, so tombstone
+     it rather than leaving a row that paints a dot for no items */
+  if(!row.items.length) row.deleted_at = row.updated_at;
+  save();
+  return true;
+}
+
 /* ================= chrome ================= */
 /* Each tab keeps its own pane in the DOM. Switching toggles visibility instead of
    tearing the view down, so nothing reflows and scroll position survives. */
@@ -631,26 +816,57 @@ function chipsHTML(sel, enabled){
         '<i>' + REASONS[x].sub + '</i></span></button>').join("") + '</div>';
 }
 
+/* Naps are stored under the day they happened on, not the night they went on to
+   affect, so a night reads its naps from the day before. Display only — nothing
+   about the sleep entry changes, and its lock is untouched. */
+function habitItemsOn(k){
+  const row = entries.find(e => !e.deleted_at && trackerOf(e) === "habits" && e.date === k);
+  return (row && Array.isArray(row.items)) ? row.items : [];
+}
+function napLine(sleepDate){
+  const NAP = TRACKERS.habits.kinds.nap;
+  const naps = habitItemsOn(shiftKey(sleepDate, -1)).filter(i => i.kind === "nap");
+  if(!naps.length) return "";
+  const opt = (f, v) => { const o = f.opts.find(p => p[0] === v); return o ? o[1] : ""; };
+  const say = i => [opt(NAP.fields[0], i.mins), opt(NAP.fields[1], i.slot)].filter(Boolean).join(", ");
+  return '<div class="hint">Napped the day before &middot; ' +
+    esc(naps.map(say).filter(Boolean).join(" and ")) + '</div>';
+}
+
 function readoutHTML(e){
   return '<div class="readout"><div class="big" style="--c:' + RATINGS[e.rating].hex + '">' +
     '<i></i><b>' + RATINGS[e.rating].label + '</b>' +
     '<span style="color:var(--dim);font-size:14px">because of ' + reasonPhrase(e.reason) +
     '</span></div>' +
     (e.note ? '<div class="note">' + esc(e.note) + '</div>'
-            : '<div class="hint">No comment on this ' + T().noun + '.</div>') + '</div>';
+            : '<div class="hint">No comment on this ' + T().noun + '.</div>') +
+    (tracker === "sleep" ? napLine(e.date) : "") + '</div>';
 }
 
-function renderLog(){
-  const view = PANE.log;
+/* the week strip. Rating trackers paint each logged day its colour; habits have
+   no single colour for a day, so they get a dot per kind logged instead. */
+function stripHTML(){
   let sel = '<div class="dsel">';
   for(let i = STRIP_BACK; i >= 0; i--){
     const k = shiftKey(todayKey(), -i), e = index.get(k), d = dateOf(k);
-    sel += '<button data-d="' + k + '" class="' + (e ? "lit" : "") + (k === logDate ? " on" : "") + '"' +
-      (e ? ' style="--c:' + RATINGS[e.rating].hex + '"' : '') + '>' +
+    const lit = e && !isLog();
+    sel += '<button data-d="' + k + '" class="' + (lit ? "lit" : "") + (k === logDate ? " on" : "") + '"' +
+      (lit ? ' style="--c:' + RATINGS[e.rating].hex + '"' : '') + '>' +
       '<span class="wd">' + "SMTWTFS"[d.getDay()] + '</span>' +
-      '<span class="dn">' + d.getDate() + '</span></button>';
+      '<span class="dn">' + d.getDate() + '</span>' +
+      (isLog() ? dotsHTML(k) : '') + '</button>';
   }
-  sel += '</div>';
+  return sel + '</div>';
+}
+function dotsHTML(k){
+  return '<span class="hdots">' + kindsOn(k).map(x =>
+    '<i style="background:' + KINDS[x].hex + '"></i>').join("") + '</span>';
+}
+
+function renderLog(){
+  if(isLog()) return renderHabitLog();
+  const view = PANE.log;
+  const sel = stripHTML();
 
   const existing = index.get(logDate);
   const mayChange = canChange(logDate);
@@ -743,6 +959,185 @@ function pickLogDate(k){
   logDate = k; logEditing = false; loadDraft(); renderLog();
 }
 
+/* ================= LOG TAB — habits ================= */
+/* Reading an instance back. Every field's value is a key into its own opts
+   list, so one lookup covers all five kinds and nothing is hard-coded here. */
+function optLabel(kindKey, fieldKey, val){
+  const f = (KINDS[kindKey] || {fields:[]}).fields.find(x => x.key === fieldKey);
+  if(!f) return String(val);
+  const o = f.opts.find(p => p[0] === val);
+  return o ? o[1] : String(val);
+}
+function itemSummary(it){
+  const kind = KINDS[it.kind];
+  if(!kind) return "A habit no longer on the list";
+  return kind.fields.map(f => {
+    const v = it[f.key];
+    if(f.multi) return (Array.isArray(v) ? v : []).map(x => optLabel(it.kind, f.key, x)).join(" + ");
+    return v == null ? "" : optLabel(it.kind, f.key, v);
+  }).filter(Boolean).join(" · ");
+}
+/* Chips are pre-selected from the clock, so logging as it happens costs no
+   extra taps and logging at night costs one. The clock is only ever a guess —
+   what gets stored is whatever is showing when you save. */
+function clockDefault(which){
+  const h = new Date().getHours();
+  if(which === "caf")  return h < 10 ? "pre10" : h < 12 ? "t10_12" : h < 15 ? "t12_15" : "post15";
+  if(which === "nap")  return h < 15 ? "pre15" : "post15";
+  if(which === "meal") return h < 11 ? "breakfast" : h < 15 ? "lunch" : h < 21 ? "dinner" : "late";
+  return null;
+}
+
+function renderHabitLog(){
+  const view = PANE.log;
+  const mayAdd = canAddItem(logDate), mayEdit = canEditItem(logDate);
+  const items = liveItems(logDate);
+  const total = itemsOf(logDate).length;
+  const count = x => items.filter(it => it.kind === x).length;
+
+  const status = mayEdit ? (total ? total + " LOGGED" : "NOTHING LOGGED YET")
+               : mayAdd  ? (total ? total + " LOGGED · STILL OPEN" : "NOT LOGGED · STILL OPEN")
+               :           (total ? total + " LOGGED · LOCKED" : "CLOSED");
+
+  const tiles = '<div class="tiles">' + KORDER.map((x, i) => {
+    const K = KINDS[x], n = count(x);
+    const wide = (i === KORDER.length - 1 && KORDER.length % 2 === 1) ? " wide" : "";
+    return '<button class="tile' + wide + '" data-k="' + x + '" style="--c:' + K.hex + '">' +
+      '<span class="sw"></span>' +
+      '<span class="t"><span class="lbl">' + K.label + '</span>' +
+      '<span class="sub">' + K.sub + '</span></span>' +
+      '<span class="tally' + (n ? "" : " zero") + '">' + n + '</span></button>';
+  }).join("") + '</div>';
+
+  view.innerHTML = stripHTML() +
+    '<div class="picked">' + fmtDay(logDate) + '<span>' + status + '</span></div>' +
+    (mayAdd
+      ? '<label style="margin-top:18px">' + T().prompt + '</label>' + tiles
+      : '<div class="hint" style="margin-top:16px">This day is closed. You can log today and the ' +
+        (backfillDays() - 1) + ' days before it.</div>') +
+    (items.length
+      ? '<div class="sec"><div class="sechead"><div class="eyebrow">Logged</div>' +
+          '<div class="eyebrow">' + (mayEdit ? "TAP TO CHANGE" : "LOCKED") + '</div></div>' +
+          '<div class="ilist">' + items.slice().sort(itemOrder).map(it =>
+            '<button class="irow" data-i="' + it.id + '" style="--c:' + KINDS[it.kind].hex + '"' +
+              (mayEdit ? "" : " disabled") + '>' +
+              '<span class="pip"></span>' +
+              '<span class="t"><b>' + esc(KINDS[it.kind].label) + '</b>' +
+              '<i>' + esc(itemSummary(it)) + '</i></span>' +
+              (mayEdit ? '<span class="go">&rsaquo;</span>' : '') + '</button>').join("") +
+          '</div></div>'
+      : "") +
+    '<div class="hint">' + (mayAdd
+      ? 'Tap a day in the strip above to catch up on the last ' + backfillDays() +
+        ' days. Once a day is past you can still add to it, but nothing already ' +
+        'down can be changed — so the record stays honest.'
+      : 'Locked. Anything logged on this day stands.') +
+      (T().hint ? '<br>' + T().hint : '') + '</div>';
+
+  view.querySelectorAll(".dsel button").forEach(b => b.onclick = () => pickLogDate(b.dataset.d));
+  view.querySelectorAll(".tile").forEach(b => b.onclick = () => itemSheet(b.dataset.k, null));
+  view.querySelectorAll(".irow").forEach(b => {
+    if(!b.disabled) b.onclick = () => {
+      const it = liveItems(logDate).find(x => x.id === b.dataset.i);
+      if(it) itemSheet(it.kind, it);
+    };
+  });
+}
+/* group a day by kind so it reads as a day, not a stream */
+function itemOrder(a, b){
+  return KORDER.indexOf(a.kind) - KORDER.indexOf(b.kind) ||
+    String(a.created_at || "").localeCompare(String(b.created_at || ""));
+}
+
+/* The logging sheet. One chip group per field; `existing` means we are editing
+   an instance already down rather than adding one. */
+function itemSheet(kindKey, existing){
+  const K = KINDS[kindKey];
+  if(!K) return;
+  const form = {};
+  K.fields.forEach(f => {
+    form[f.key] = existing ? existing[f.key]
+                : f.multi  ? []
+                : f.clock  ? clockDefault(f.clock)
+                : null;
+    if(f.multi && !Array.isArray(form[f.key])) form[f.key] = [];
+  });
+
+  const groups = K.fields.map(f =>
+    '<label>' + esc(f.label) + (f.multi ? ' <span style="text-transform:none;letter-spacing:0">' +
+      '(tap all that apply)</span>' : '') + '</label>' +
+    '<div class="cg" data-f="' + f.key + '" style="--c:' + K.hex + '">' +
+      f.opts.map(o => '<button data-v="' + esc(o[0]) + '">' + esc(o[1]) + '</button>').join("") +
+    '</div>').join("");
+
+  openSheet('<h2>' + esc(K.label) + '</h2>' +
+    '<div class="meta">' + esc(fmtDay(logDate).toUpperCase()) + '</div>' +
+    groups +
+    '<div class="acts"><button class="btn" onclick="closeSheet()">Cancel</button>' +
+      '<button class="btn primary" id="isv">' + (existing ? "Update" : "Save") + '</button></div>' +
+    (existing
+      ? '<button class="btn danger" id="irm">Remove this ' + esc(K.label.toLowerCase()) + '</button>'
+      : '<button class="btn" id="isva">Save and add another</button>') +
+    '<div class="hint" id="ihint"></div>');
+
+  const sheetEl = document.getElementById("sheet");
+  const paint = () => {
+    sheetEl.querySelectorAll(".cg").forEach(g => {
+      const v = form[g.dataset.f];
+      g.querySelectorAll("button").forEach(b => b.classList.toggle("on",
+        Array.isArray(v) ? v.indexOf(b.dataset.v) !== -1 : v === b.dataset.v));
+    });
+    const miss = missing();
+    document.getElementById("ihint").textContent = miss ? "Still need: " + miss : "";
+    document.getElementById("isv").disabled = !!miss;
+    const another = document.getElementById("isva");
+    if(another) another.disabled = !!miss;
+  };
+  const missing = () => K.fields.filter(f => {
+    const v = form[f.key];
+    return f.multi ? !v.length : v == null;
+  }).map(f => f.label.toLowerCase()).join(", ");
+
+  sheetEl.querySelectorAll(".cg button").forEach(b => b.onclick = () => {
+    const key = b.parentNode.dataset.f;
+    const f = K.fields.find(x => x.key === key);
+    buzz();
+    if(f.multi){
+      const at = form[key].indexOf(b.dataset.v);
+      if(at === -1) form[key].push(b.dataset.v); else form[key].splice(at, 1);
+    } else {
+      form[key] = (form[key] === b.dataset.v) ? null : b.dataset.v;
+    }
+    paint();
+  });
+
+  const commit = again => {
+    if(missing()) return;
+    /* backfilling is a one-shot: the day it describes has already passed, so it
+       is locked the instant it is written */
+    if(!existing && !canEditItem(logDate) &&
+       !confirm(fmtDay(logDate) + " is already past, so anything you add to it locks as soon as " +
+                "you save and cannot be changed afterwards.\n\nSave it?")) return;
+    const item = Object.assign({kind:kindKey}, form);
+    if(existing){ item.id = existing.id; item.created_at = existing.created_at; }
+    if(!putItem(logDate, item)) return toast("That day is locked", "Nothing was saved");
+    buzz(); renderHeader(); renderBanners(); renderLog(); stale.log = false;
+    toast(K.label + (existing ? " updated" : " logged"), itemSummary(item));
+    if(again) itemSheet(kindKey, null); else closeSheet();
+  };
+  document.getElementById("isv").onclick = () => commit(false);
+  const another = document.getElementById("isva");
+  if(another) another.onclick = () => commit(true);
+  const rm = document.getElementById("irm");
+  if(rm) rm.onclick = () => {
+    if(!confirm("Remove this " + K.label.toLowerCase() + "?")) return;
+    removeItem(logDate, existing.id);
+    renderHeader(); renderBanners(); renderLog(); stale.log = false;
+    closeSheet(); toast(K.label + " removed", fmtShort(logDate));
+  };
+  paint();
+}
+
 
 /* in-place update of everything on the Log pane that depends on state */
 function syncLog(){
@@ -767,6 +1162,27 @@ function syncLog(){
 /* ================= HISTORY TAB ================= */
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 
+/* habits have no colour split to summarise a month with, so the month reads as
+   how often each habit happened: total instances, and how many days it landed on */
+function monthKindRows(y, m){
+  const dim = new Date(y, m + 1, 0).getDate();
+  const n = zeroed(KORDER), days = zeroed(KORDER);
+  for(let d = 1; d <= dim; d++){
+    const seen = {};
+    liveItems(keyOf(new Date(y, m, d))).forEach(it => { n[it.kind]++; seen[it.kind] = 1; });
+    KORDER.forEach(x => { if(seen[x]) days[x]++; });
+  }
+  const max = Math.max(1, ...KORDER.map(x => n[x]));
+  return '<div class="mix">' + KORDER.map(x =>
+    '<div class="mixrow" style="--c:' + KINDS[x].hex + '">' +
+      '<i class="sw"></i>' +
+      '<span class="ml">' + KINDS[x].label + '</span>' +
+      '<span class="mb"><i style="width:' + (n[x] / max * 100) + '%"></i></span>' +
+      '<span class="mv">' + n[x] + '</span>' +
+      '<span class="mn">' + days[x] + 'd</span></div>').join("") + '</div>' +
+    '<div class="hint">Left number is how many times; right is how many days it landed on.</div>';
+}
+
 function renderHistory(){
   const view = PANE.history;
   const first = new Date(calY, calM, 1);
@@ -781,12 +1197,14 @@ function renderHistory(){
     const k = keyOf(new Date(calY, calM, d));
     const e = index.get(k), future = agoOf(k) < 0;
     if(!future) elapsed++;
-    if(e){ counts[e.rating]++; logged++; }
-    cells += '<button class="cell ' + (e ? RATINGS[e.rating].cls : "") +
+    if(e && !isLog()){ counts[e.rating]++; logged++; }
+    if(e && isLog()) logged++;
+    const open = isLog() ? canAddItem(k) : editable(k);
+    cells += '<button class="cell ' + (isLog() ? "hab" + (e ? " has" : "") : (e ? RATINGS[e.rating].cls : "")) +
       (future ? " future" : "") + (k === todayKey() ? " today" : "") +
-      (!editable(k) && !future ? " locked" : "") + '" data-d="' + k + '"' +
+      (!open && !future ? " locked" : "") + '" data-d="' + k + '"' +
       (future ? " disabled" : "") + '>' + d +
-      (e && e.note ? '<span class="nt"></span>' : '') + '</button>';
+      (isLog() ? dotsHTML(k) : (e && e.note ? '<span class="nt"></span>' : '')) + '</button>';
   }
 
   view.innerHTML =
@@ -801,15 +1219,21 @@ function renderHistory(){
     '<div class="wdays"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>' +
     '<div class="cal">' + cells + '</div>' +
     '<div class="legend">' +
-      RORDER.map(r => '<div style="color:' + RATINGS[r].hex + '"><i class="' +
-        (RATINGS[r].extra ? "halo" : "") + '" style="border-radius:50%;background:' + RATINGS[r].hex +
-        '"></i><span style="color:var(--dim)">' + RATINGS[r].label + '</span></div>').join("") +
+      (isLog()
+        ? KORDER.map(x => '<div><i style="border-radius:50%;background:' + KINDS[x].hex +
+            '"></i><span style="color:var(--dim)">' + KINDS[x].label + '</span></div>').join("")
+        : RORDER.map(r => '<div style="color:' + RATINGS[r].hex + '"><i class="' +
+            (RATINGS[r].extra ? "halo" : "") + '" style="border-radius:50%;background:' + RATINGS[r].hex +
+            '"></i><span style="color:var(--dim)">' + RATINGS[r].label + '</span></div>').join("")) +
       '<div><i style="border-radius:50%;background:var(--surface);border:1px solid var(--line)"></i>Not logged</div>' +
     '</div>' +
     '<div class="sec"><div class="sechead"><div class="eyebrow">This month</div>' +
       '<div class="eyebrow">' + logged + ' of ' + nOf(elapsed) + ' logged</div></div>' +
-      (logged ? splitBar(counts, logged) + mixRows(counts, logged)
-              : '<div class="empty">No ' + T().nounPl + ' logged this month yet.</div>') +
+      (isLog()
+        ? (logged ? monthKindRows(calY, calM)
+                  : '<div class="empty">Nothing logged this month yet.</div>')
+        : (logged ? splitBar(counts, logged) + mixRows(counts, logged)
+                  : '<div class="empty">No ' + T().nounPl + ' logged this month yet.</div>')) +
     '</div>' +
     '<div class="hint" style="margin-top:18px">Tap a day to see what you put down. ' +
       'Changes are made on the Log tab.</div>';
@@ -839,16 +1263,29 @@ function daySheet(k){
       ? dateOf(k).toLocaleDateString([], {month:"long", day:"numeric", year:"numeric"}).toUpperCase()
       : agoOf(k) + " DAYS AGO") + '</div>';
 
-  body += e
-    ? readoutHTML(e)
-    : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged on the ' +
-        T().label.toLowerCase() + ' tracker for this day.</div></div>';
+  const items = isLog() ? liveItems(k).slice().sort(itemOrder) : [];
+  body += isLog()
+    ? (items.length
+        ? '<div class="ilist">' + items.map(it =>
+            '<div class="irow" style="--c:' + KINDS[it.kind].hex + '">' +
+              '<span class="pip"></span>' +
+              '<span class="t"><b>' + esc(KINDS[it.kind].label) + '</b>' +
+              '<i>' + esc(itemSummary(it)) + '</i></span></div>').join("") + '</div>'
+        : '<div class="readout"><div style="color:var(--dim);font-size:14px">' +
+            'No habits logged for this day.</div></div>')
+    : e
+      ? readoutHTML(e)
+      : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged on the ' +
+          T().label.toLowerCase() + ' tracker for this day.</div></div>';
 
-  body += '<div class="hint">' + (
-      canChange(k) ? 'To change this, open it on the Log tab.'
-    : canEnter(k)  ? 'Not logged yet — you can still fill it in on the Log tab.'
-    : e            ? 'Locked. ' + lockLine()
-    :                'Closed — outside the last ' + backfillDays() + ' ' + T().nounPl + '.') + '</div>' +
+  body += '<div class="hint">' + (isLog()
+    ? (canEditItem(k) ? 'To add to this or change it, open it on the Log tab.'
+     : canAddItem(k)  ? 'You can still add to this day on the Log tab, but what is already down stands.'
+     :                  'Locked. Anything logged on this day stands.')
+    : (canChange(k) ? 'To change this, open it on the Log tab.'
+     : canEnter(k)  ? 'Not logged yet — you can still fill it in on the Log tab.'
+     : e            ? 'Locked. ' + lockLine()
+     :                'Closed — outside the last ' + backfillDays() + ' ' + T().nounPl + '.')) + '</div>' +
     '<button class="btn" onclick="closeSheet()">Close</button>';
 
   openSheet(body);
@@ -897,6 +1334,7 @@ function ratingKey(){
 }
 
 function renderCharts(){
+  if(isLog()) return renderHabitCharts();
   const view = PANE.charts;
   /* a row filed under a reason since removed still shows on Log and History —
      it just cannot be counted into a breakdown that has no bucket for it */
@@ -996,6 +1434,202 @@ function renderCharts(){
       '</p></div></div>';
 
   view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });
+}
+
+/* ================= CHARTS TAB — habits ================= */
+/* one option's share of a field, e.g. how the caffeine splits across the day */
+function fieldRows(items, kindKey, fieldKey){
+  const f = KINDS[kindKey].fields.find(x => x.key === fieldKey);
+  const counts = {}; f.opts.forEach(o => counts[o[0]] = 0);
+  let n = 0;
+  items.filter(i => i.kind === kindKey).forEach(i => {
+    const v = i[fieldKey];
+    (Array.isArray(v) ? v : [v]).forEach(x => {
+      if(Object.prototype.hasOwnProperty.call(counts, x)){ counts[x]++; n++; }
+    });
+  });
+  const max = Math.max(1, ...f.opts.map(o => counts[o[0]]));
+  return '<div class="mix">' + f.opts.map(o =>
+    '<div class="mixrow" style="--c:' + KINDS[kindKey].hex + '">' +
+      '<i class="sw"></i><span class="ml">' + esc(o[1]) + '</span>' +
+      '<span class="mb"><i style="width:' + (counts[o[0]] / max * 100) + '%"></i></span>' +
+      '<span class="mv">' + counts[o[0]] + '</span>' +
+      '<span class="mn">' + pct(counts[o[0]], n) + '%</span></div>').join("") + '</div>';
+}
+
+/* every live row of another tracker, by date — the one place anything reads
+   across trackers, and it never writes */
+function rowsOf(tk){
+  const m = new Map();
+  entries.forEach(e => { if(!e.deleted_at && trackerOf(e) === tk && e.rating) m.set(e.date, e); });
+  return m;
+}
+/* Habits on day D are joined to Sleep on D+1 — a night belongs to the day it
+   ended on, so the day that caused it is the one before — and to Days on D. */
+function joinTo(tk, offset){
+  const target = rowsOf(tk), out = [];
+  inRange().forEach(row => {
+    const items = (Array.isArray(row.items) ? row.items : []).filter(it => knownKind(it.kind));
+    if(!items.length) return;
+    const t = target.get(shiftKey(row.date, offset));
+    if(t) out.push({items:items, rating:t.rating});
+  });
+  return out;
+}
+const ozOf = its => its.filter(i => i.kind === "caffeine")
+  .reduce((n, i) => n + (Number(i.oz) || 0), 0);
+function medianOz(rows){
+  const v = rows.map(r => ozOf(r.items)).sort((a,b) => a - b);
+  if(!v.length) return 0;
+  const h = Math.floor(v.length / 2);
+  return v.length % 2 ? v[h] : (v[h-1] + v[h]) / 2;
+}
+const has = (its, kind, fn) => its.some(i => i.kind === kind && (!fn || fn(i)));
+
+/* Each comparison splits the joined days in two and reports how each half
+   turned out. Deliberately not a correlation coefficient: the inputs are
+   categorical and the sample is small, and a split with its counts beside it
+   cannot imply precision it does not have. */
+const COMPARISONS = [
+  {t:"sleep", off:1, label:"Caffeine after 12pm", a:"After 12pm", b:"None late",
+   f:its => has(its, "caffeine", i => i.slot === "t12_15" || i.slot === "post15")},
+  {t:"sleep", off:1, label:"Caffeine above your usual", a:"Above median", b:"At or below",
+   f:(its, c) => ozOf(its) > c.med, need:c => c.med > 0},
+  {t:"sleep", off:1, label:"Exercised that day", a:"Exercised", b:"Did not",
+   f:its => has(its, "exercise")},
+  {t:"sleep", off:1, label:"Hard exercise", a:"Hard", b:"Easier or none",
+   f:its => has(its, "exercise", i => i.effort === "hard")},
+  {t:"sleep", off:1, label:"Napped", a:"Napped", b:"No nap",
+   f:its => has(its, "nap")},
+  {t:"sleep", off:1, label:"Nap after 3pm", a:"Late nap", b:"Early or none",
+   f:its => has(its, "nap", i => i.slot === "post15")},
+  {t:"sleep", off:1, label:"Late snack", a:"Late snack", b:"None",
+   f:its => has(its, "meal", i => i.meal === "late")},
+  {t:"sleep", off:1, label:"High sugar", a:"High", b:"Lower or none",
+   f:its => has(its, "sugar", i => i.amount === "high")},
+  {t:"days", off:0, label:"High sugar", a:"High", b:"Lower or none",
+   f:its => has(its, "sugar", i => i.amount === "high")},
+  {t:"days", off:0, label:"Sugar away from home", a:"Outside", b:"Home or none",
+   f:its => has(its, "sugar", i => i.where === "outside")},
+  {t:"days", off:0, label:"Two or more meals with protein", a:"Two or more", b:"Fewer",
+   f:its => its.filter(i => i.kind === "meal" && i.protein === "yes").length >= 2},
+  {t:"days", off:0, label:"Exercised that day", a:"Exercised", b:"Did not",
+   f:its => has(its, "exercise")}
+];
+const MIN_SIDE = 8, MIN_TOTAL = 14;
+
+function corrBlock(tk){
+  const label = TRACKERS[tk].label;
+  const rows = joinTo(tk, tk === "sleep" ? 1 : 0);
+  const head = '<div class="sec"><div class="sechead"><div class="eyebrow">Against ' + label +
+    '</div><div class="eyebrow">' + rows.length + ' matched</div></div>';
+
+  if(rows.length < MIN_TOTAL){
+    return head + '<div class="empty">Not enough overlap yet — ' + rows.length + ' of ' + MIN_TOTAL +
+      ' days.<br>Keep logging both and this fills in.</div></div>';
+  }
+  const ctx = {med: medianOz(rows)};
+  const cards = COMPARISONS.filter(c => c.t === tk && (!c.need || c.need(ctx))).map(c => {
+    const yes = rows.filter(r => c.f(r.items, ctx));
+    const no  = rows.filter(r => !c.f(r.items, ctx));
+    if(yes.length < MIN_SIDE || no.length < MIN_SIDE) return "";
+    const g = set => pct(set.filter(r => isGood(r.rating)).length, set.length);
+    const gy = g(yes), gn = g(no), diff = gy - gn;
+    const bar = (name, p, n) => '<div class="cbar"><span class="cl">' + esc(name) + '</span>' +
+      '<span class="cm"><i style="width:' + p + '%"></i></span>' +
+      '<span class="cv">' + p + '%</span><span class="cn">' + n + '</span></div>';
+    return '<div class="card corr" style="--c:' + RATINGS.green.hex + '">' +
+      '<div class="ch">' + esc(c.label) + '</div>' +
+      bar(c.a, gy, yes.length) + bar(c.b, gn, no.length) +
+      '<div class="gap">' + (Math.abs(diff) < 5
+        ? "No real difference so far."
+        : Math.abs(diff) + " points " + (diff > 0 ? "better" : "worse") +
+          (tk === "sleep" ? " on the nights after." : " on the days it happened.")) +
+      '</div></div>';
+  }).filter(Boolean);
+
+  return head + (cards.length
+    ? '<div class="hint">Each bar is the share of ' + (tk === "sleep" ? "nights" : "days") +
+      ' that came out green or better, with how many beside it.</div>' + cards.join("")
+    : '<div class="empty">Nothing has both sides logged often enough yet.<br>' +
+      'Each comparison needs ' + MIN_SIDE + ' days either way.</div>') + '</div>';
+}
+
+function renderHabitCharts(){
+  const view = PANE.charts;
+  const bar = '<div class="rangebar">' + RANGES.map(r =>
+    '<button data-k="' + r.k + '"' + (range === r.k ? ' class="on"' : '') + '>' + r.label + '</button>').join("") + '</div>';
+  const bind = () => view.querySelectorAll(".rangebar button")
+    .forEach(b => b.onclick = () => { range = b.dataset.k; renderHabitCharts(); });
+
+  const days = inRange();
+  const items = days.reduce((a, r) =>
+    a.concat((Array.isArray(r.items) ? r.items : []).filter(it => knownKind(it.kind))), []);
+
+  if(!items.length){
+    view.innerHTML = bar + '<div class="empty">No habits logged in this range yet.<br>' +
+      'Log a few and the picture shows up here.</div>';
+    bind(); return;
+  }
+
+  const n = zeroed(KORDER), onDays = zeroed(KORDER);
+  days.forEach(r => {
+    const seen = {};
+    (Array.isArray(r.items) ? r.items : []).forEach(it => {
+      if(!knownKind(it.kind)) return;
+      n[it.kind]++; seen[it.kind] = 1;
+    });
+    KORDER.forEach(x => { if(seen[x]) onDays[x]++; });
+  });
+  const max = Math.max(1, ...KORDER.map(x => n[x]));
+  const dayCount = days.length;
+
+  view.innerHTML = bar +
+    '<div class="sec"><div class="sechead"><div class="eyebrow">' + T().mix + '</div>' +
+      '<div class="eyebrow">' + dayCount + ' days logged</div></div>' +
+      '<div class="mix">' + KORDER.map(x =>
+        '<div class="mixrow" style="--c:' + KINDS[x].hex + '">' +
+          '<i class="sw"></i><span class="ml">' + KINDS[x].label + '</span>' +
+          '<span class="mb"><i style="width:' + (n[x] / max * 100) + '%"></i></span>' +
+          '<span class="mv">' + n[x] + '</span>' +
+          '<span class="mn">' + onDays[x] + 'd</span></div>').join("") + '</div>' +
+      '<div class="hint">How many times, and how many days it landed on.</div></div>' +
+
+    (n.caffeine ? '<div class="sec"><div class="sechead"><div class="eyebrow">Caffeine</div>' +
+      '<div class="eyebrow">' + (n.caffeine / Math.max(1, dayCount)).toFixed(1) + ' a day</div></div>' +
+      '<div class="card">' + fieldRows(items, "caffeine", "slot") +
+      fieldRows(items, "caffeine", "oz") + '</div></div>' : "") +
+
+    (n.exercise ? '<div class="sec"><div class="sechead"><div class="eyebrow">Exercise</div>' +
+      '<div class="eyebrow">' + pct(onDays.exercise, dayCount) + '% of days</div></div>' +
+      '<div class="card">' + fieldRows(items, "exercise", "types") +
+      fieldRows(items, "exercise", "effort") + '</div></div>' : "") +
+
+    (n.meal ? '<div class="sec"><div class="sechead"><div class="eyebrow">Meals</div>' +
+      '<div class="eyebrow">' + (n.meal / Math.max(1, dayCount)).toFixed(1) + ' a day</div></div>' +
+      '<div class="card">' + fieldRows(items, "meal", "meal") +
+      fieldRows(items, "meal", "protein") + '</div></div>' : "") +
+
+    (n.sugar ? '<div class="sec"><div class="sechead"><div class="eyebrow">Sugar</div>' +
+      '<div class="eyebrow">' + pct(onDays.sugar, dayCount) + '% of days</div></div>' +
+      '<div class="card">' + fieldRows(items, "sugar", "amount") +
+      fieldRows(items, "sugar", "where") + '</div></div>' : "") +
+
+    (n.nap ? '<div class="sec"><div class="sechead"><div class="eyebrow">Naps</div>' +
+      '<div class="eyebrow">' + pct(onDays.nap, dayCount) + '% of days</div></div>' +
+      '<div class="card">' + fieldRows(items, "nap", "mins") +
+      fieldRows(items, "nap", "slot") + '</div></div>' : "") +
+
+    corrBlock("sleep") + corrBlock("days") +
+
+    '<div class="sec"><div class="card"><h3>Reading these</h3><p>' +
+      'Each split shows how the nights or days went either side of one habit, with the ' +
+      'count beside it. A night is matched to the day before it; a day to itself. ' +
+      'With a dozen splits on a few weeks of logging, one or two will look meaningful ' +
+      'by chance — treat anything here as worth watching, not as cause and effect.' +
+      '</p></div></div>';
+
+  bind();
 }
 
 /* ================= nav ================= */
@@ -1157,13 +1791,35 @@ function exportJSON(){
   });
 }
 function exportCSV(){
-  const head = ["tracker","date","weekday","rating","reason","comment","created_at","updated_at"];
+  const head = ["tracker","date","weekday","rating","reason","habit","detail","comment",
+                "created_at","updated_at"];
   const q = s => '"' + String(s == null ? "" : s).replace(/"/g,'""') + '"';
-  const rows = entries.filter(e => !e.deleted_at).slice()
-    .sort((a,b) => a.date.localeCompare(b.date) || trackerOf(a).localeCompare(trackerOf(b))).map(e => [
-    trackerOf(e), e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"}), e.rating, e.reason, e.note,
-    e.created_at, e.updated_at
-  ].map(q).join(","));
+  /* A rating row is one line. A habits row is one line per instance, so the
+     file stays one thing per line and a spreadsheet can pivot it. */
+  const HK = TRACKERS.habits.kinds;
+  const detail = it => {
+    const K = HK[it.kind];
+    if(!K) return "";
+    return K.fields.map(f => {
+      const v = it[f.key];
+      const name = x => { const o = f.opts.find(p => p[0] === x); return o ? o[1] : x; };
+      if(f.multi) return (Array.isArray(v) ? v : []).map(name).join(" + ");
+      return v == null ? "" : name(v);
+    }).filter(Boolean).join(" · ");
+  };
+  const rows = [];
+  entries.filter(e => !e.deleted_at).slice()
+    .sort((a,b) => a.date.localeCompare(b.date) || trackerOf(a).localeCompare(trackerOf(b)))
+    .forEach(e => {
+      const base = [trackerOf(e), e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"})];
+      const tail = [e.note, e.created_at, e.updated_at];
+      if(Array.isArray(e.items)){
+        e.items.forEach(it => rows.push(
+          base.concat(["", "", it.kind, detail(it)]).concat(tail).map(q).join(",")));
+      } else {
+        rows.push(base.concat([e.rating, e.reason, "", ""]).concat(tail).map(q).join(","));
+      }
+    });
   sendFile("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv")
     .catch(err => { if(!err || err.name !== "AbortError") logErr("export csv", err); });
 }
