@@ -293,14 +293,15 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 /* ---- nav ---- */
 nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
-/* Sized to match the Ted tracker's bar exactly: 13/12 padding, the active
-   indicator in flow above the label, and the full home-indicator inset rather
-   than a capped one. 46px of chrome plus the inset — about 80px on a phone.
-   The inset stays inside the button rather than under it, as it is here, so
-   the whole bar is tap area; that is invisible and strictly better. */
+/* 13/12 padding and the active indicator in flow above the label, as the Ted
+   tracker has them. The home-indicator inset is halved rather than applied
+   whole: at full inset the labels floated well clear of the bottom edge on a
+   phone, so the gap below them is cut from 12px + inset to half of that. The
+   button still runs to the bottom edge, so the whole bar stays tap area — only
+   the label moves down, and 23px still clears the home indicator itself. */
 nav button{position:relative;flex:1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   font-weight:650;color:var(--dimmer);
-  padding:13px 0 calc(12px + env(safe-area-inset-bottom))}
+  padding:13px 0 calc((12px + env(safe-area-inset-bottom)) / 2)}
 nav button.on{color:var(--text)}
 nav button .ind{display:block;width:20px;height:2px;border-radius:2px;
   background:transparent;margin:0 auto 7px}
@@ -373,7 +374,7 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.10.0";
+const APP_VERSION = "1.11.0";
 const SCHEMA_VERSION = 3;   /* 2 adds `tracker` to every row; rows without one are days.
                                3 adds habits rows, which carry `items` and no rating */
 const STRIP_DAYS = 7;                /* how much of the week the Log strip shows */
@@ -421,7 +422,7 @@ const TRACKERS = {
      shape it is looking at. Nothing branches on the tracker's name. */
   habits: {
     label:"Habits", noun:"habit day", nounPl:"habit days", every:"every day",
-    backfill:3, change:1, mode:"log",
+    backfill:7, change:1, mode:"log",
     prompt:"What you did",
     placeholder:"Anything worth remembering about today",
     mix:"Habit mix",
@@ -449,7 +450,7 @@ const TRACKERS = {
       sugar:{
         label:"Sugar", sub:"Something sweet", hex:"#E3A63F",
         fields:[
-          {key:"where",  label:"Where",  opts:[["home","Home"],["outside","Outside"]]},
+          {key:"bought", label:"Bought it", opts:[["yes","Yes"],["no","No"]]},
           {key:"amount", label:"How much", opts:[["low","Low"],["normal","Normal"],["high","High"]]}
         ]
       },
@@ -459,7 +460,8 @@ const TRACKERS = {
           {key:"meal",    label:"Which", clock:"meal",
            opts:[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],
                  ["snack","Snack"],["late","Late snack"]]},
-          {key:"protein", label:"Protein in it", opts:[["yes","Yes"],["no","No"]]}
+          {key:"protein", label:"Protein in it",
+           opts:[["no","No"],["low","Low"],["medium","Medium"],["high","High"]]}
         ]
       },
       nap:{
@@ -962,17 +964,28 @@ function pickLogDate(k){
 /* ================= LOG TAB — habits ================= */
 /* Reading an instance back. Every field's value is a key into its own opts
    list, so one lookup covers all five kinds and nothing is hard-coded here. */
+/* Values written by an older build whose options have since been reworded.
+   Kept so an existing row still reads as a sentence rather than a raw key. */
+const LEGACY_LABEL = {yes:"Yes"};
+/* Sugar used to ask where it happened; it now asks whether you bought it.
+   Buying is the closer reading of "outside", so old rows answer the new
+   question rather than going blank. Read-time only — nothing is rewritten. */
+function fieldValue(it, key){
+  if(it[key] != null) return it[key];
+  if(key === "bought" && it.where != null) return it.where === "outside" ? "yes" : "no";
+  return null;
+}
 function optLabel(kindKey, fieldKey, val){
   const f = (KINDS[kindKey] || {fields:[]}).fields.find(x => x.key === fieldKey);
   if(!f) return String(val);
   const o = f.opts.find(p => p[0] === val);
-  return o ? o[1] : String(val);
+  return o ? o[1] : (LEGACY_LABEL[val] || String(val));
 }
 function itemSummary(it){
   const kind = KINDS[it.kind];
   if(!kind) return "A habit no longer on the list";
   return kind.fields.map(f => {
-    const v = it[f.key];
+    const v = fieldValue(it, f.key);
     if(f.multi) return (Array.isArray(v) ? v : []).map(x => optLabel(it.kind, f.key, x)).join(" + ");
     return v == null ? "" : optLabel(it.kind, f.key, v);
   }).filter(Boolean).join(" · ");
@@ -1443,7 +1456,7 @@ function fieldRows(items, kindKey, fieldKey){
   const counts = {}; f.opts.forEach(o => counts[o[0]] = 0);
   let n = 0;
   items.filter(i => i.kind === kindKey).forEach(i => {
-    const v = i[fieldKey];
+    const v = fieldValue(i, fieldKey);
     (Array.isArray(v) ? v : [v]).forEach(x => {
       if(Object.prototype.hasOwnProperty.call(counts, x)){ counts[x]++; n++; }
     });
@@ -1485,6 +1498,10 @@ function medianOz(rows){
   return v.length % 2 ? v[h] : (v[h-1] + v[h]) / 2;
 }
 const has = (its, kind, fn) => its.some(i => i.kind === kind && (!fn || fn(i)));
+/* protein is a level now; "yes" is what the old yes/no wrote, and reads as the
+   middle of the new scale so existing meals still count as protein */
+const proteinRank = v => v === "high" ? 3 : v === "medium" || v === "yes" ? 2
+                       : v === "low" ? 1 : 0;
 
 /* Each comparison splits the joined days in two and reports how each half
    turned out. Deliberately not a correlation coefficient: the inputs are
@@ -1509,10 +1526,10 @@ const COMPARISONS = [
    f:its => has(its, "sugar", i => i.amount === "high")},
   {t:"days", off:0, label:"High sugar", a:"High", b:"Lower or none",
    f:its => has(its, "sugar", i => i.amount === "high")},
-  {t:"days", off:0, label:"Sugar away from home", a:"Outside", b:"Home or none",
-   f:its => has(its, "sugar", i => i.where === "outside")},
-  {t:"days", off:0, label:"Two or more meals with protein", a:"Two or more", b:"Fewer",
-   f:its => its.filter(i => i.kind === "meal" && i.protein === "yes").length >= 2},
+  {t:"days", off:0, label:"Sugar you bought", a:"Bought", b:"From home or none",
+   f:its => has(its, "sugar", i => fieldValue(i, "bought") === "yes")},
+  {t:"days", off:0, label:"Two or more solid-protein meals", a:"Two or more", b:"Fewer",
+   f:its => its.filter(i => i.kind === "meal" && proteinRank(i.protein) >= 2).length >= 2},
   {t:"days", off:0, label:"Exercised that day", a:"Exercised", b:"Did not",
    f:its => has(its, "exercise")}
 ];
@@ -1613,7 +1630,7 @@ function renderHabitCharts(){
     (n.sugar ? '<div class="sec"><div class="sechead"><div class="eyebrow">Sugar</div>' +
       '<div class="eyebrow">' + pct(onDays.sugar, dayCount) + '% of days</div></div>' +
       '<div class="card">' + fieldRows(items, "sugar", "amount") +
-      fieldRows(items, "sugar", "where") + '</div></div>' : "") +
+      fieldRows(items, "sugar", "bought") + '</div></div>' : "") +
 
     (n.nap ? '<div class="sec"><div class="sechead"><div class="eyebrow">Naps</div>' +
       '<div class="eyebrow">' + pct(onDays.nap, dayCount) + '% of days</div></div>' +

@@ -39,8 +39,8 @@ to fill in.
 |---|---|
 | Caffeine | Green or black tea, 8/12/16/24 oz, and the time of day |
 | Exercise | Running, hiking, strength, PT, other (any combination), duration, effort |
-| Sugar | Home or outside, low/normal/high |
-| Meal | Breakfast, lunch, dinner, snack or late snack, and whether it had protein |
+| Sugar | Whether you bought it, low/normal/high |
+| Meal | Breakfast, lunch, dinner, snack or late snack, and how much protein: no/low/medium/high |
 | Nap | Duration, and before or after 3pm |
 
 Time is asked for, never taken from the clock — the timestamp on a row says when
@@ -79,7 +79,7 @@ Each tracker sets both, so the two can be as strict as they need to be:
 | | `backfill` | `change` | in practice |
 |---|---|---|---|
 | Sleep | 3 | 1 | fill in three days back; change only on the day itself |
-| Habits | 3 | 1 | add to the last three days; change only on the day itself |
+| Habits | 7 | 1 | add to the last week; change only on the day itself |
 | Days | 7 | 7 | fill in or change anything in the last week |
 
 Where `change` is 1, a backfilled date locks the moment it is saved — the day it
@@ -89,9 +89,10 @@ than a draft, which is the point of keeping it.
 
 Habits reads these slightly differently, because an event log has no "blank"
 date — another instance can always be added. So `backfill` governs **adding** an
-instance and `change` governs **editing or deleting** one: the last three days
-stay open to catch up on, but nothing already written can be revised after its
-own day.
+instance and `change` governs **editing or deleting** one: the whole visible week
+stays open to catch up on, but nothing already written can be revised after its
+own day. The window matches the Log strip, so every day you can see is a day you
+can still add to.
 
 All four permissions are enforced in `putDay`, `clearDay`, `putItem` and
 `removeItem`, not only in the buttons, so a stale pane cannot write through them.

@@ -54,7 +54,8 @@ when you are catching up on a whole day at once.
 The app never guesses when something happened from the clock — you will often be
 logging at night, especially travelling. So caffeine asks for the time of day,
 meals ask breakfast / lunch / dinner / snack / late snack, and naps ask before or
-after 3pm. The chips come pre-selected from the current time, so logging as it
+after 3pm. Sugar asks whether you **bought** it, so you can see how often the
+craving got you out of the house rather than into the kitchen. The chips come pre-selected from the current time, so logging as it
 happens is no extra work and logging late is one tap.
 
 **Naps go under Habits, not Sleep.** A nap happens long after you have logged the
@@ -73,10 +74,10 @@ confirm first. A saved night can only be changed on the day it belongs to; after
 that it reads **LOGGED · LOCKED** and there is no way back in. A blank night
 older than three days reads **CLOSED** and cannot be filled in at all.
 
-On **Habits** it is the same three days, read for a log rather than an entry: you
-can add to today and the two days before it, but anything already written can
-only be changed on its own day. So you can always catch up, and you can never
-tidy up.
+On **Habits** you get the whole week: you can add to today and the six days
+before it — the same seven days the strip shows, so anything you can see you can
+still fill in. What you cannot do is revise. Once a day is past, what is already
+written on it stands. So you can always catch up, and you can never tidy up.
 
 **History** — a month at a time, each day a circle painted its colour. On Habits
 there is no colour to paint with, so each day carries a small dot per habit you
