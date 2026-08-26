@@ -308,18 +308,17 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 /* ---- nav ---- */
 nav{flex:0 0 auto;display:flex;background:var(--bg);border-top:1px solid var(--line);
   padding-left:max(0px,calc(50% - 215px));padding-right:max(0px,calc(50% - 215px))}
-/* 13/12 padding and the active indicator in flow above the label, as the Ted
-   tracker has them. The home-indicator inset is halved rather than applied
-   whole: at full inset the labels floated well clear of the bottom edge on a
-   phone, so the gap below them is cut from 12px + inset to half of that. The
-   button still runs to the bottom edge, so the whole bar stays tap area — only
-   the label moves down, and 23px still clears the home indicator itself. */
+/* 30px tall on a phone with no home-indicator inset. The home-indicator inset
+   is halved rather than applied whole: at full inset the labels floated well
+   clear of the bottom edge, so the gap below them is cut from 6px + inset to
+   half of that. The button still runs to the bottom edge, so the whole bar
+   stays tap area — only the label moves down. */
 nav button{position:relative;flex:1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  font-weight:650;color:var(--dimmer);
-  padding:13px 0 calc((12px + env(safe-area-inset-bottom)) / 2)}
+  font-weight:650;color:var(--dimmer);line-height:1;
+  padding:9px 0 calc((6px + env(safe-area-inset-bottom)) / 2)}
 nav button.on{color:var(--text)}
 nav button .ind{display:block;width:20px;height:2px;border-radius:2px;
-  background:transparent;margin:0 auto 7px}
+  background:transparent;margin:0 auto 5px}
 nav button.on .ind{background:var(--text)}
 
 /* ---- sheet + toast ---- */
@@ -390,7 +389,7 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.12.0";
+const APP_VERSION = "1.12.1";
 const SCHEMA_VERSION = 3;   /* 2 adds `tracker` to every row; rows without one are days.
                                3 adds the log-tracker row, which carries `items` and no
                                rating. Health rows are that same shape, so adding the
