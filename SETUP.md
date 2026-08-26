@@ -1,10 +1,10 @@
 # Days — setup
 
 Rate every day, and every night, on five levels — extra green, green, yellow,
-red, extra red — say what drove it, log what you actually did, and watch the
-pattern show up. The switch at the top left moves between the **Sleep**,
-**Habits** and **Days** trackers. Everything stays on your phone. No account, no
-server, no one else.
+red, extra red — say what drove it, log what you actually did, keep a record of
+what your gut is up to, and watch the pattern show up. The switch at the top left
+moves between the **Sleep**, **Habits**, **Health** and **Days** trackers.
+Everything stays on your phone. No account, no server, no one else.
 
 ## Put it online (once, on a computer)
 
@@ -28,7 +28,8 @@ will not appear in the Home Screen app — they are separate storage.
 
 ## How it works
 
-**Switching tracker** — the pill at the top left is Sleep / Habits / Days. Each
+**Switching tracker** — the pill at the top left is Sleep / Habits / Health /
+Days. Each
 keeps its own entries, its own calendar and its own charts; only the backup file
 and the storage underneath are shared. On the Sleep tracker a night belongs to
 the day it ended on, so this morning's sleep goes under today.
@@ -58,6 +59,16 @@ after 3pm. Sugar asks whether you **bought** it, so you can see how often the
 craving got you out of the house rather than into the kitchen. The chips come pre-selected from the current time, so logging as it
 happens is no extra work and logging late is one tap.
 
+**Health** logs symptoms the same way Habits logs choices. Two tiles: **GI
+issues** and **Poopy pain**. Tap GI issues, tap every symptom that applies — acid
+reflux, gas, stomach ache, heartburn — say how bad and when, and write a comment:
+what you ate, how long it lasted, what helped. Poopy pain asks how bad and when,
+and takes a comment too. The comment is the part you will want in a month, and it
+shows under the entry wherever it is listed.
+
+One entry per bout. If reflux comes back after dinner, that is a second entry —
+the charts count it as two times on one day, which is what you want to see.
+
 **Naps go under Habits, not Sleep.** A nap happens long after you have logged the
 night, and it belongs with the caffeine and the exercise that shape the *next*
 night. Your sleep entry still shows the previous day's nap as a line underneath,
@@ -74,14 +85,14 @@ confirm first. A saved night can only be changed on the day it belongs to; after
 that it reads **LOGGED · LOCKED** and there is no way back in. A blank night
 older than three days reads **CLOSED** and cannot be filled in at all.
 
-On **Habits** you get the whole week: you can add to today and the six days
+On **Habits** and **Health** you get the whole week: you can add to today and the six days
 before it — the same seven days the strip shows, so anything you can see you can
 still fill in. What you cannot do is revise. Once a day is past, what is already
 written on it stands. So you can always catch up, and you can never tidy up.
 
 **History** — a month at a time, each day a circle painted its colour. On Habits
-there is no colour to paint with, so each day carries a small dot per habit you
-logged, and the month underneath counts how often each one happened. A small
+and Health there is no colour to paint with, so each day carries a small dot per
+kind you logged, and the month underneath counts how often each one happened. A small
 dot under the number means you left a comment. **Today** jumps back to the
 current month. Extra green and extra red days are drawn brighter and ringed, so
 the standout days catch your eye as you scan the month. Tapping a day shows you
@@ -103,6 +114,14 @@ Nothing shows up there until you have 14 days with both logged, and each
 comparison needs 8 days either way before it appears. Give it a month before you
 read much into it — with a dozen comparisons, one or two will look striking by
 pure chance.
+
+On **Health**, Charts is deliberately just the numbers — no comparisons, nothing
+to over-read. For each of the two kinds: how many times, how many days it
+happened, what share of the days that is, and how often it works out to in a
+week. Then the breakdown: which symptom, how bad, and what time of day. The
+share and the weekly average are worked out over the whole range you picked, not
+just the days you logged something — otherwise a symptom you only log when it
+happens would read as happening every day.
 
 ## Rules that keep the data alive
 

@@ -49,14 +49,18 @@ header{padding:calc(env(safe-area-inset-top) + 14px) var(--pad) 12px;border-bott
    but the five colours */
 .tsw{display:flex;gap:3px;padding:3px;border-radius:13px;background:var(--surface);
   border:1px solid var(--line);flex:0 0 auto}
-.tsw button{padding:8px 15px;border-radius:10px;font-size:14px;font-weight:650;
+.tsw button{padding:8px 12px;border-radius:10px;font-size:14px;font-weight:650;
   letter-spacing:-.01em;color:var(--dim);transition:background .16s ease,color .16s ease}
 .tsw button.on{background:var(--surface2);color:var(--text)}
 .tsw button:not(.on):active{background:var(--bg)}
-/* three trackers plus the DATA button is about 292px of header; on a 320px
-   phone that overflows by a few pixels, so the pill tightens rather than wraps */
-@media (max-width:360px){
-  .tsw button{padding:8px 11px;font-size:13px;letter-spacing:-.02em}
+/* four trackers plus the DATA button is about 322px of header, which clears a
+   390px phone; below that the pill tightens rather than wraps, twice over */
+@media (max-width:400px){
+  .tsw button{padding:8px 9px;font-size:13.5px;letter-spacing:-.015em}
+}
+@media (max-width:340px){
+  .tsw{gap:2px;padding:2px}
+  .tsw button{padding:8px 6px;font-size:12.5px;letter-spacing:-.03em}
 }
 .who{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em;
   display:inline-flex;align-items:center;gap:6px}
@@ -201,10 +205,14 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .bigsplit{display:flex;height:15px;border-radius:8px;overflow:hidden;margin-top:14px;background:var(--surface2)}
 .bigsplit i{display:block;height:100%}
 .mix{margin-top:12px}
+/* one field's breakdown inside a chart card, under a caption saying which
+   field it is — a card can stack three of them and they must not run together */
+.fgrp + .fgrp{margin-top:17px;padding-top:15px;border-top:1px solid var(--line)}
+.fgrp .mix{margin-top:7px}
 .mixrow{display:flex;align-items:center;gap:9px;padding:7px 0}
 .mixrow .sw{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
 .mixrow.extra .sw{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px color-mix(in srgb,var(--c) 55%,transparent)}
-.mixrow .ml{font-size:13px;flex:0 0 84px}
+.mixrow .ml{font-size:13px;flex:0 0 92px}
 .mixrow .mb{flex:1;height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
 .mixrow .mb i{display:block;height:100%;background:var(--c);border-radius:4px}
 .mixrow .mv{font-family:var(--mono);font-size:13px;flex:0 0 38px;text-align:right}
@@ -231,13 +239,16 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .stat .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);
   font-weight:650;margin-top:7px;line-height:1.4}
 
-/* ---- habits: tiles, chip groups, instance rows, dots ---- */
-/* The habits tracker logs events rather than rating a day, so it gets its own
+/* ---- the log trackers: tiles, chip groups, instance rows, dots ---- */
+/* Habits and Health log events rather than rating a day, so they get their own
    furniture. Everything else on the pane — .picked, .sec, .card, .hint — is
    shared with the two rating trackers. */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+/* A tracker with two kinds or fewer runs them full width: half a phone is not
+   enough for a label like "Poopy pain" and the line under it. */
+.tiles.one{grid-template-columns:1fr}
 .tile{display:flex;align-items:center;gap:10px;padding:13px 13px;border-radius:13px;
-  background:var(--surface);border:1px solid var(--line);text-align:left;
+  background:var(--surface);border:1px solid var(--line);text-align:left;min-width:0;
   transition:transform .09s ease,border-color .16s ease}
 .tile:active{transform:scale(.97)}
 .tile.wide{grid-column:1 / -1}
@@ -267,6 +278,10 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .irow .t b{display:block;font-size:14px;font-weight:620;letter-spacing:-.01em}
 .irow .t i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px;
   line-height:1.4}
+/* the comment left on one instance — kinds that ask for one (the health
+   symptoms) put what it felt like here, under the detail it was logged with */
+.irow .t .cmt{display:block;font-size:11.5px;color:var(--dimmer);margin-top:4px;
+  line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
 .irow .go{font-size:15px;color:var(--dimmer);flex:0 0 auto}
 .irow[disabled]{opacity:.72}
 
@@ -348,6 +363,7 @@ nav button.on .ind{background:var(--text)}
     <div class="tsw" id="tsw">
       <button data-t="sleep">Sleep</button>
       <button data-t="habits">Habits</button>
+      <button data-t="health">Health</button>
       <button data-t="days">Days</button>
     </div>
     <button class="who" id="gearBtn">DATA<span class="badge" id="gearBadge" hidden></span></button>
@@ -374,14 +390,17 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.11.0";
+const APP_VERSION = "1.12.0";
 const SCHEMA_VERSION = 3;   /* 2 adds `tracker` to every row; rows without one are days.
-                               3 adds habits rows, which carry `items` and no rating */
+                               3 adds the log-tracker row, which carries `items` and no
+                               rating. Health rows are that same shape, so adding the
+                               tracker needed no bump — an older build carries them
+                               through untouched rather than dropping them. */
 const STRIP_DAYS = 7;                /* how much of the week the Log strip shows */
 const STRIP_BACK = STRIP_DAYS - 1;   /* ...expressed as days back */
 
-/* the five colours are the one thing both trackers share outright; the words
-   under each label come from the tracker (TRACKERS[...].subs) */
+/* the five colours are the one thing the rating trackers share outright; the
+   words under each label come from the tracker (TRACKERS[...].subs) */
 const RATINGS = {
   xgreen: {label:"Extra green", hex:"#3FD07A", cls:"gg", extra:true},
   green:  {label:"Green",       hex:"#56A06B", cls:"g"},
@@ -392,8 +411,9 @@ const RATINGS = {
 const RORDER = ["xgreen","green","yellow","red","xred"];
 const isGood = r => r === "green" || r === "xgreen";
 
-/* Two trackers share the five colours, the seven-day window, the calendar, the
-   charts and the backup file. Everything that differs between them lives here. */
+/* The trackers share the seven-day window, the calendar, the charts and the
+   backup file — and the rating ones share the five colours. Everything that
+   differs between them lives here, so nothing below branches on a name. */
 const TRACKERS = {
   sleep: {
     label:"Sleep", noun:"night", nounPl:"nights", every:"every night", backfill:3, change:1,
@@ -428,9 +448,14 @@ const TRACKERS = {
     mix:"Habit mix",
     hint:"Log habits under the day they happened on. A night is compared against the day before it.",
     korder:["caffeine","exercise","sugar","meal","nap"],
+    /* the Charts tab reads these two: the order the per-kind sections come in,
+       and which rating trackers this one is worth splitting against */
+    chorder:["caffeine","exercise","meal","sugar","nap"],
+    corr:["sleep","days"],
     kinds:{
       caffeine:{
         label:"Caffeine", sub:"Tea", hex:"#A2764F",
+        chart:{rate:"perDay", rows:[{f:"slot"}, {f:"oz"}]},
         fields:[
           {key:"tea",  label:"Which",  opts:[["green","Green tea"],["black","Black tea"]]},
           {key:"oz",   label:"Size",   opts:[["8","8 oz"],["12","12 oz"],["16","16 oz"],["24","24 oz"]]},
@@ -440,6 +465,7 @@ const TRACKERS = {
       },
       exercise:{
         label:"Exercise", sub:"Session", hex:"#5CA86B",
+        chart:{rate:"pctDays", rows:[{f:"types"}, {f:"effort"}]},
         fields:[
           {key:"types",  label:"What", multi:true,
            opts:[["run","Running"],["hike","Hiking"],["strength","Strength"],["pt","PT"],["other","Other"]]},
@@ -449,6 +475,7 @@ const TRACKERS = {
       },
       sugar:{
         label:"Sugar", sub:"Something sweet", hex:"#E3A63F",
+        chart:{rate:"pctDays", rows:[{f:"amount"}, {f:"bought"}]},
         fields:[
           {key:"bought", label:"Bought it", opts:[["yes","Yes"],["no","No"]]},
           {key:"amount", label:"How much", opts:[["low","Low"],["normal","Normal"],["high","High"]]}
@@ -456,6 +483,7 @@ const TRACKERS = {
       },
       meal:{
         label:"Meal", sub:"Breakfast to late snack", hex:"#5B8ED8",
+        chart:{title:"Meals", rate:"perDay", rows:[{f:"meal"}, {f:"protein"}]},
         fields:[
           {key:"meal",    label:"Which", clock:"meal",
            opts:[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],
@@ -466,9 +494,55 @@ const TRACKERS = {
       },
       nap:{
         label:"Nap", sub:"Daytime sleep", hex:"#7C6FD0",
+        chart:{title:"Naps", rate:"pctDays", rows:[{f:"mins"}, {f:"slot"}]},
         fields:[
           {key:"mins", label:"How long", opts:[["u30","Under 30 min"],["m30_60","30–60 min"],["o60","Over 1 hr"]]},
           {key:"slot", label:"When", opts:[["pre15","Before 3pm"],["post15","After 3pm"]], clock:"nap"}
+        ]
+      }
+    }
+  },
+  /* Health is the same event log as Habits and runs on the same machinery, but
+     what it records is symptoms rather than choices. Two differences follow from
+     that: every instance carries a comment of its own (`note`), because what a
+     bout felt like is the part worth keeping; and its charts are counts rather
+     than splits — `rate:"stats"` — since the question here is how often, not
+     what caused what. */
+  health: {
+    label:"Health", noun:"health day", nounPl:"health days", every:"every day",
+    backfill:7, change:1, mode:"log",
+    prompt:"What showed up",
+    placeholder:"Anything worth remembering about today",
+    mix:"Health mix",
+    hint:"Log a symptom under the day it happened on, and put what it felt like in its comment.",
+    korder:["gi","poop"],
+    kinds:{
+      gi:{
+        label:"GI issues", sub:"Reflux, gas, ache, heartburn", hex:"#4E9EA3",
+        note:"What you ate, how long it lasted, what helped",
+        chart:{rate:"stats", rows:[{f:"types", cap:"Which one", mode:"days"},
+                                   {f:"severity"}, {f:"slot"}]},
+        fields:[
+          {key:"types",    label:"What", multi:true,
+           opts:[["reflux","Acid reflux"],["gas","Gas"],["ache","Stomach ache"],
+                 ["heartburn","Heartburn"]]},
+          {key:"severity", label:"How bad",
+           opts:[["mild","Mild"],["medium","Medium"],["bad","Bad"]]},
+          {key:"slot",     label:"When", clock:"tod",
+           opts:[["morning","Morning"],["afternoon","Afternoon"],
+                 ["evening","Evening"],["night","Night"]]}
+        ]
+      },
+      poop:{
+        label:"Poopy pain", sub:"Pain when going to the bathroom", hex:"#C77B5B",
+        note:"How it went, how long the pain lasted, what helped",
+        chart:{rate:"stats", rows:[{f:"severity"}, {f:"slot"}]},
+        fields:[
+          {key:"severity", label:"How bad",
+           opts:[["mild","Mild"],["medium","Medium"],["bad","Bad"]]},
+          {key:"slot",     label:"When", clock:"tod",
+           opts:[["morning","Morning"],["afternoon","Afternoon"],
+                 ["evening","Evening"],["night","Night"]]}
         ]
       }
     }
@@ -498,11 +572,13 @@ const T = () => TRACKERS[tracker];
    without threading it through */
 let REASONS = TRACKERS.sleep.reasons;
 let XORDER  = TRACKERS.sleep.order;
-/* the habits tracker has neither, so both fall back to empty rather than
+/* the log trackers have neither, so both fall back to empty rather than
    undefined — anything that reads them stays safe without asking which
-   tracker is on screen */
-let KINDS  = {};
-let KORDER = [];
+   tracker is on screen. KORDER is the order the Log tab lists kinds in;
+   CHORDER is the order Charts does, and defaults to the same. */
+let KINDS   = {};
+let KORDER  = [];
+let CHORDER = [];
 const knownReason = x => Object.prototype.hasOwnProperty.call(REASONS, x);
 const reasonPhrase = x => !knownReason(x) ? "a reason no longer on the list"
   : (REASONS[x].phrase || REASONS[x].label.toLowerCase());
@@ -512,6 +588,7 @@ function applyTracker(t){
   tracker = t;
   REASONS = T().reasons || {}; XORDER = T().order  || [];
   KINDS   = T().kinds   || {}; KORDER = T().korder || [];
+  CHORDER = T().chorder || KORDER;
 }
 
 /* ================= storage ================= */
@@ -866,7 +943,7 @@ function dotsHTML(k){
 }
 
 function renderLog(){
-  if(isLog()) return renderHabitLog();
+  if(isLog()) return renderItemLog();
   const view = PANE.log;
   const sel = stripHTML();
 
@@ -961,9 +1038,10 @@ function pickLogDate(k){
   logDate = k; logEditing = false; loadDraft(); renderLog();
 }
 
-/* ================= LOG TAB — habits ================= */
+/* ================= LOG TAB — the log trackers ================= */
 /* Reading an instance back. Every field's value is a key into its own opts
-   list, so one lookup covers all five kinds and nothing is hard-coded here. */
+   list, so one lookup covers every kind on every log tracker and nothing is
+   hard-coded here. */
 /* Values written by an older build whose options have since been reworded.
    Kept so an existing row still reads as a sentence rather than a raw key. */
 const LEGACY_LABEL = {yes:"Yes"};
@@ -981,9 +1059,12 @@ function optLabel(kindKey, fieldKey, val){
   const o = f.opts.find(p => p[0] === val);
   return o ? o[1] : (LEGACY_LABEL[val] || String(val));
 }
+/* The comment a kind asks for, if it asked for one and one was written. Shown
+   under the detail line wherever an instance is listed. */
+const noteLine = it => it.note ? '<span class="cmt">' + esc(it.note) + '</span>' : "";
 function itemSummary(it){
   const kind = KINDS[it.kind];
-  if(!kind) return "A habit no longer on the list";
+  if(!kind) return "Something no longer on the list";
   return kind.fields.map(f => {
     const v = fieldValue(it, f.key);
     if(f.multi) return (Array.isArray(v) ? v : []).map(x => optLabel(it.kind, f.key, x)).join(" + ");
@@ -998,10 +1079,11 @@ function clockDefault(which){
   if(which === "caf")  return h < 10 ? "pre10" : h < 12 ? "t10_12" : h < 15 ? "t12_15" : "post15";
   if(which === "nap")  return h < 15 ? "pre15" : "post15";
   if(which === "meal") return h < 11 ? "breakfast" : h < 15 ? "lunch" : h < 21 ? "dinner" : "late";
+  if(which === "tod")  return h < 11 ? "morning" : h < 17 ? "afternoon" : h < 21 ? "evening" : "night";
   return null;
 }
 
-function renderHabitLog(){
+function renderItemLog(){
   const view = PANE.log;
   const mayAdd = canAddItem(logDate), mayEdit = canEditItem(logDate);
   const items = liveItems(logDate);
@@ -1012,9 +1094,10 @@ function renderHabitLog(){
                : mayAdd  ? (total ? total + " LOGGED · STILL OPEN" : "NOT LOGGED · STILL OPEN")
                :           (total ? total + " LOGGED · LOCKED" : "CLOSED");
 
-  const tiles = '<div class="tiles">' + KORDER.map((x, i) => {
+  const one = KORDER.length <= 2;
+  const tiles = '<div class="tiles' + (one ? " one" : "") + '">' + KORDER.map((x, i) => {
     const K = KINDS[x], n = count(x);
-    const wide = (i === KORDER.length - 1 && KORDER.length % 2 === 1) ? " wide" : "";
+    const wide = (!one && i === KORDER.length - 1 && KORDER.length % 2 === 1) ? " wide" : "";
     return '<button class="tile' + wide + '" data-k="' + x + '" style="--c:' + K.hex + '">' +
       '<span class="sw"></span>' +
       '<span class="t"><span class="lbl">' + K.label + '</span>' +
@@ -1036,7 +1119,7 @@ function renderHabitLog(){
               (mayEdit ? "" : " disabled") + '>' +
               '<span class="pip"></span>' +
               '<span class="t"><b>' + esc(KINDS[it.kind].label) + '</b>' +
-              '<i>' + esc(itemSummary(it)) + '</i></span>' +
+              '<i>' + esc(itemSummary(it)) + '</i>' + noteLine(it) + '</span>' +
               (mayEdit ? '<span class="go">&rsaquo;</span>' : '') + '</button>').join("") +
           '</div></div>'
       : "") +
@@ -1083,9 +1166,19 @@ function itemSheet(kindKey, existing){
       f.opts.map(o => '<button data-v="' + esc(o[0]) + '">' + esc(o[1]) + '</button>').join("") +
     '</div>').join("");
 
+  /* Kinds that ask for one get a comment box. It sits below the chips and
+     outside `form`, so nothing about it is required and paint() never rebuilds
+     it — the keyboard and the caret survive tapping a chip mid-sentence. */
+  const wantsNote = !!K.note;
+  const noteBox = wantsNote
+    ? '<label for="inote">Comment (optional)</label>' +
+      '<textarea id="inote" placeholder="' + esc(K.note) + '">' +
+      esc(existing && existing.note || "") + '</textarea>'
+    : "";
+
   openSheet('<h2>' + esc(K.label) + '</h2>' +
     '<div class="meta">' + esc(fmtDay(logDate).toUpperCase()) + '</div>' +
-    groups +
+    groups + noteBox +
     '<div class="acts"><button class="btn" onclick="closeSheet()">Cancel</button>' +
       '<button class="btn primary" id="isv">' + (existing ? "Update" : "Save") + '</button></div>' +
     (existing
@@ -1132,6 +1225,10 @@ function itemSheet(kindKey, existing){
        !confirm(fmtDay(logDate) + " is already past, so anything you add to it locks as soon as " +
                 "you save and cannot be changed afterwards.\n\nSave it?")) return;
     const item = Object.assign({kind:kindKey}, form);
+    if(wantsNote){
+      const box = document.getElementById("inote");
+      item.note = (box ? box.value : (existing && existing.note) || "").trim();
+    }
     if(existing){ item.id = existing.id; item.created_at = existing.created_at; }
     if(!putItem(logDate, item)) return toast("That day is locked", "Nothing was saved");
     buzz(); renderHeader(); renderBanners(); renderLog(); stale.log = false;
@@ -1283,9 +1380,11 @@ function daySheet(k){
             '<div class="irow" style="--c:' + KINDS[it.kind].hex + '">' +
               '<span class="pip"></span>' +
               '<span class="t"><b>' + esc(KINDS[it.kind].label) + '</b>' +
-              '<i>' + esc(itemSummary(it)) + '</i></span></div>').join("") + '</div>'
+              '<i>' + esc(itemSummary(it)) + '</i>' + noteLine(it) +
+              '</span></div>').join("") + '</div>'
         : '<div class="readout"><div style="color:var(--dim);font-size:14px">' +
-            'No habits logged for this day.</div></div>')
+            'Nothing logged on the ' + T().label.toLowerCase() +
+            ' tracker for this day.</div></div>')
     : e
       ? readoutHTML(e)
       : '<div class="readout"><div style="color:var(--dim);font-size:14px">Nothing logged on the ' +
@@ -1347,7 +1446,7 @@ function ratingKey(){
 }
 
 function renderCharts(){
-  if(isLog()) return renderHabitCharts();
+  if(isLog()) return renderItemCharts();
   const view = PANE.charts;
   /* a row filed under a reason since removed still shows on Log and History —
      it just cannot be counted into a breakdown that has no bucket for it */
@@ -1449,17 +1548,27 @@ function renderCharts(){
   view.querySelectorAll(".rangebar button").forEach(b => b.onclick = () => { range = b.dataset.k; renderCharts(); });
 }
 
-/* ================= CHARTS TAB — habits ================= */
-/* one option's share of a field, e.g. how the caffeine splits across the day */
-function fieldRows(items, kindKey, fieldKey){
+/* ================= CHARTS TAB — the log trackers ================= */
+/* One option's share of a field, e.g. how the caffeine splits across the day or
+   which of the GI symptoms shows up most. The right-hand number is the option's
+   share of that field by default; `mode:"days"` makes it how many days the
+   option landed on instead, which is what a symptom wants — two bouts of reflux
+   in one afternoon is one bad day, not two. */
+function fieldRows(days, kindKey, fieldKey, mode){
   const f = KINDS[kindKey].fields.find(x => x.key === fieldKey);
-  const counts = {}; f.opts.forEach(o => counts[o[0]] = 0);
+  const counts = {}, onDays = {};
+  f.opts.forEach(o => { counts[o[0]] = 0; onDays[o[0]] = 0; });
   let n = 0;
-  items.filter(i => i.kind === kindKey).forEach(i => {
-    const v = fieldValue(i, fieldKey);
-    (Array.isArray(v) ? v : [v]).forEach(x => {
-      if(Object.prototype.hasOwnProperty.call(counts, x)){ counts[x]++; n++; }
+  days.forEach(row => {
+    const seen = {};
+    (Array.isArray(row.items) ? row.items : []).forEach(i => {
+      if(i.kind !== kindKey) return;
+      const v = fieldValue(i, fieldKey);
+      (Array.isArray(v) ? v : [v]).forEach(x => {
+        if(Object.prototype.hasOwnProperty.call(counts, x)){ counts[x]++; n++; seen[x] = 1; }
+      });
     });
+    f.opts.forEach(o => { if(seen[o[0]]) onDays[o[0]]++; });
   });
   const max = Math.max(1, ...f.opts.map(o => counts[o[0]]));
   return '<div class="mix">' + f.opts.map(o =>
@@ -1467,7 +1576,54 @@ function fieldRows(items, kindKey, fieldKey){
       '<i class="sw"></i><span class="ml">' + esc(o[1]) + '</span>' +
       '<span class="mb"><i style="width:' + (counts[o[0]] / max * 100) + '%"></i></span>' +
       '<span class="mv">' + counts[o[0]] + '</span>' +
-      '<span class="mn">' + pct(counts[o[0]], n) + '%</span></div>').join("") + '</div>';
+      '<span class="mn">' + (mode === "days" ? onDays[o[0]] + 'd' : pct(counts[o[0]], n) + '%') +
+      '</span></div>').join("") + '</div>';
+}
+
+/* How many days the chosen range actually covers for this tracker: a 30-day
+   window over a log that started nine days ago is nine days, not thirty.
+   Anything reported as a share or a weekly average divides by this rather than
+   by the days you happened to log something on — otherwise a symptom you only
+   ever log when it happens reads as happening every single day. */
+function rangeSpan(){
+  const r = RANGES.find(x => x.k === range), all = live();
+  if(!all.length) return 0;
+  const first = all.reduce((m, e) => e.date < m ? e.date : m, all[0].date);
+  const since = agoOf(first) + 1;
+  return r.days ? Math.min(r.days, since) : since;
+}
+
+/* the plain numbers behind one kind: how many, on how many days, what share of
+   the range that is, and what it works out to in a week */
+function statTiles(K, n, onDays, span){
+  const tile = (v, k) => '<div class="stat"><div class="v" style="color:' + K.hex + '">' + v +
+    '</div><div class="k">' + k + '</div></div>';
+  return '<div class="stats">' +
+    tile(n, "Times logged") +
+    tile(onDays, "Days it happened") +
+    tile(pct(onDays, span) + "%", "Share of days") +
+    tile(span ? (n / span * 7).toFixed(1) : "0", "Times a week") + '</div>';
+}
+
+/* One kind's section, entirely from the kind's own `chart` block: the rate on
+   the right of the heading, the stat tiles if it asked for them, and a row of
+   bars per field it wants broken down. A kind with no `chart` gets no section. */
+function kindSection(days, x, n, onDays, dayCount, span){
+  const K = KINDS[x], C = K.chart;
+  if(!C || !n) return "";
+  const rate = C.rate === "perDay"  ? (n / Math.max(1, dayCount)).toFixed(1) + " a day"
+             : C.rate === "pctDays" ? pct(onDays, dayCount) + "% of days"
+             : n >= span            ? (n / Math.max(1, span)).toFixed(1) + " a day"
+             :                        "one every " + (span / n).toFixed(1) + " days";
+  return '<div class="sec"><div class="sechead">' +
+      '<div class="eyebrow">' + esc(C.title || K.label) + '</div>' +
+      '<div class="eyebrow">' + rate + '</div></div>' +
+    (C.rate === "stats" ? statTiles(K, n, onDays, span) : "") +
+    '<div class="card">' + C.rows.map(r => {
+      const f = K.fields.find(q => q.key === r.f);
+      return '<div class="fgrp"><div class="eyebrow">' + esc(r.cap || (f && f.label) || "") +
+        '</div>' + fieldRows(days, x, r.f, r.mode) + '</div>';
+    }).join("") + '</div></div>';
 }
 
 /* every live row of another tracker, by date — the one place anything reads
@@ -1572,20 +1728,20 @@ function corrBlock(tk){
       'Each comparison needs ' + MIN_SIDE + ' days either way.</div>') + '</div>';
 }
 
-function renderHabitCharts(){
+function renderItemCharts(){
   const view = PANE.charts;
   const bar = '<div class="rangebar">' + RANGES.map(r =>
     '<button data-k="' + r.k + '"' + (range === r.k ? ' class="on"' : '') + '>' + r.label + '</button>').join("") + '</div>';
   const bind = () => view.querySelectorAll(".rangebar button")
-    .forEach(b => b.onclick = () => { range = b.dataset.k; renderHabitCharts(); });
+    .forEach(b => b.onclick = () => { range = b.dataset.k; renderItemCharts(); });
 
   const days = inRange();
   const items = days.reduce((a, r) =>
     a.concat((Array.isArray(r.items) ? r.items : []).filter(it => knownKind(it.kind))), []);
 
   if(!items.length){
-    view.innerHTML = bar + '<div class="empty">No habits logged in this range yet.<br>' +
-      'Log a few and the picture shows up here.</div>';
+    view.innerHTML = bar + '<div class="empty">Nothing logged in this range yet.<br>' +
+      'Log a few and the numbers show up here.</div>';
     bind(); return;
   }
 
@@ -1600,10 +1756,12 @@ function renderHabitCharts(){
   });
   const max = Math.max(1, ...KORDER.map(x => n[x]));
   const dayCount = days.length;
+  /* never fewer days than you actually logged on, whatever the arithmetic says */
+  const span = Math.max(dayCount, rangeSpan());
 
   view.innerHTML = bar +
     '<div class="sec"><div class="sechead"><div class="eyebrow">' + T().mix + '</div>' +
-      '<div class="eyebrow">' + dayCount + ' days logged</div></div>' +
+      '<div class="eyebrow">' + dayCount + ' of ' + span + ' days logged</div></div>' +
       '<div class="mix">' + KORDER.map(x =>
         '<div class="mixrow" style="--c:' + KINDS[x].hex + '">' +
           '<i class="sw"></i><span class="ml">' + KINDS[x].label + '</span>' +
@@ -1612,39 +1770,23 @@ function renderHabitCharts(){
           '<span class="mn">' + onDays[x] + 'd</span></div>').join("") + '</div>' +
       '<div class="hint">How many times, and how many days it landed on.</div></div>' +
 
-    (n.caffeine ? '<div class="sec"><div class="sechead"><div class="eyebrow">Caffeine</div>' +
-      '<div class="eyebrow">' + (n.caffeine / Math.max(1, dayCount)).toFixed(1) + ' a day</div></div>' +
-      '<div class="card">' + fieldRows(items, "caffeine", "slot") +
-      fieldRows(items, "caffeine", "oz") + '</div></div>' : "") +
+    CHORDER.map(x => kindSection(days, x, n[x], onDays[x], dayCount, span)).join("") +
 
-    (n.exercise ? '<div class="sec"><div class="sechead"><div class="eyebrow">Exercise</div>' +
-      '<div class="eyebrow">' + pct(onDays.exercise, dayCount) + '% of days</div></div>' +
-      '<div class="card">' + fieldRows(items, "exercise", "types") +
-      fieldRows(items, "exercise", "effort") + '</div></div>' : "") +
-
-    (n.meal ? '<div class="sec"><div class="sechead"><div class="eyebrow">Meals</div>' +
-      '<div class="eyebrow">' + (n.meal / Math.max(1, dayCount)).toFixed(1) + ' a day</div></div>' +
-      '<div class="card">' + fieldRows(items, "meal", "meal") +
-      fieldRows(items, "meal", "protein") + '</div></div>' : "") +
-
-    (n.sugar ? '<div class="sec"><div class="sechead"><div class="eyebrow">Sugar</div>' +
-      '<div class="eyebrow">' + pct(onDays.sugar, dayCount) + '% of days</div></div>' +
-      '<div class="card">' + fieldRows(items, "sugar", "amount") +
-      fieldRows(items, "sugar", "bought") + '</div></div>' : "") +
-
-    (n.nap ? '<div class="sec"><div class="sechead"><div class="eyebrow">Naps</div>' +
-      '<div class="eyebrow">' + pct(onDays.nap, dayCount) + '% of days</div></div>' +
-      '<div class="card">' + fieldRows(items, "nap", "mins") +
-      fieldRows(items, "nap", "slot") + '</div></div>' : "") +
-
-    corrBlock("sleep") + corrBlock("days") +
-
-    '<div class="sec"><div class="card"><h3>Reading these</h3><p>' +
-      'Each split shows how the nights or days went either side of one habit, with the ' +
-      'count beside it. A night is matched to the day before it; a day to itself. ' +
-      'With a dozen splits on a few weeks of logging, one or two will look meaningful ' +
-      'by chance — treat anything here as worth watching, not as cause and effect.' +
-      '</p></div></div>';
+    (T().corr
+      ? T().corr.map(tk => corrBlock(tk)).join("") +
+        '<div class="sec"><div class="card"><h3>Reading these</h3><p>' +
+          'Each split shows how the nights or days went either side of one habit, with the ' +
+          'count beside it. A night is matched to the day before it; a day to itself. ' +
+          'With a dozen splits on a few weeks of logging, one or two will look meaningful ' +
+          'by chance — treat anything here as worth watching, not as cause and effect.' +
+          '</p></div></div>'
+      : '<div class="sec"><div class="card"><h3>Reading these</h3><p>' +
+          'Counts, not causes. On every row the left number is how many times and the ' +
+          'right one is how many days it landed on, so two bouts in one afternoon read ' +
+          'as one bad day rather than two. Shares and weekly averages are worked out ' +
+          'over the ' + span + ' days this range covers, not just the days something was ' +
+          'logged, so a quiet stretch pulls them down the way it should.' +
+          '</p></div></div>');
 
   bind();
 }
@@ -1736,7 +1878,7 @@ function dataSheet(){
     '<label for="pastebox">Or paste a backup</label>' +
     '<textarea id="pastebox" placeholder="Paste copied backup text here"></textarea>' +
     '<button class="btn" onclick="restorePasted()">Restore from pasted text</button>' +
-    '<div class="hint">One backup holds both trackers. Either way entries merge by ' +
+    '<div class="hint">One backup holds every tracker. Either way entries merge by ' +
       'tracker and date and the newer version wins — restoring never loses what you ' +
       'have already logged.</div>' +
     '<button class="btn" onclick="forceUpdate()">Check for update</button>' +
@@ -1808,14 +1950,14 @@ function exportJSON(){
   });
 }
 function exportCSV(){
-  const head = ["tracker","date","weekday","rating","reason","habit","detail","comment",
+  const head = ["tracker","date","weekday","rating","reason","kind","detail","comment",
                 "created_at","updated_at"];
   const q = s => '"' + String(s == null ? "" : s).replace(/"/g,'""') + '"';
-  /* A rating row is one line. A habits row is one line per instance, so the
-     file stays one thing per line and a spreadsheet can pivot it. */
-  const HK = TRACKERS.habits.kinds;
-  const detail = it => {
-    const K = HK[it.kind];
+  /* A rating row is one line. A log row is one line per instance, so the file
+     stays one thing per line and a spreadsheet can pivot it. The kind is looked
+     up under the row's own tracker, so habits and health both read back. */
+  const detail = (it, tk) => {
+    const K = (TRACKERS[tk] && TRACKERS[tk].kinds || {})[it.kind];
     if(!K) return "";
     return K.fields.map(f => {
       const v = it[f.key];
@@ -1828,13 +1970,16 @@ function exportCSV(){
   entries.filter(e => !e.deleted_at).slice()
     .sort((a,b) => a.date.localeCompare(b.date) || trackerOf(a).localeCompare(trackerOf(b)))
     .forEach(e => {
-      const base = [trackerOf(e), e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"})];
-      const tail = [e.note, e.created_at, e.updated_at];
+      const tk = trackerOf(e);
+      const base = [tk, e.date, dateOf(e.date).toLocaleDateString([], {weekday:"long"})];
       if(Array.isArray(e.items)){
+        /* an instance's own comment is the one worth keeping on its line */
         e.items.forEach(it => rows.push(
-          base.concat(["", "", it.kind, detail(it)]).concat(tail).map(q).join(",")));
+          base.concat(["", "", it.kind, detail(it, tk), it.note || e.note,
+                       it.created_at || e.created_at, e.updated_at]).map(q).join(",")));
       } else {
-        rows.push(base.concat([e.rating, e.reason, "", ""]).concat(tail).map(q).join(","));
+        rows.push(base.concat([e.rating, e.reason, "", "",
+                               e.note, e.created_at, e.updated_at]).map(q).join(","));
       }
     });
   sendFile("days-" + stamp() + ".csv", head.join(",") + "\n" + rows.join("\n"), "text/csv")

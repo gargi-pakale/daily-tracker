@@ -1,10 +1,10 @@
 # Days
 
-A private tracker with three sides to it. Two of them rate a day — or a night —
+A private tracker with four sides to it. Two of them rate a day — or a night —
 on five levels: extra green, green, yellow, red, extra red. Say what drove it and
 add a comment if it's worth remembering. The two extremes are drawn brighter and
-ringed in the calendar so standout entries are obvious at a glance. The third
-records what you actually did, so the other two have something to be explained by.
+ringed in the calendar so standout entries are obvious at a glance. The other two
+record what actually happened, so the rated ones have something to be explained by.
 
 The switch at the top left picks which tracker you are looking at. Sleep leads
 because it is logged first thing; the day is logged last thing.
@@ -12,6 +12,7 @@ because it is logged first thing; the day is logged last thing.
 - **Sleep** — how the night went, driven by my health, a new place, the alarm,
   duration, or Ted shenanigans.
 - **Habits** — what you did: caffeine, exercise, sugar, meals, naps.
+- **Health** — what your gut did: GI issues and poopy pain, each with a comment.
 - **Days** — how the day went, driven by me, others, or my health.
 
 On Sleep and Days, each reason is one topic and the colour supplies the
@@ -19,21 +20,28 @@ direction, so a late night that worked is green under Duration and one that cost
 you is red under the same reason. That keeps five buckets filling up instead of
 ten half-empty ones.
 
-The three share the calendar, the charts, the backup file and the storage
+The four share the calendar, the charts, the backup file and the storage
 underneath, and nothing else. Entries on the same date in different trackers are
 separate and never overwrite each other.
 
 Three tabs, and they follow whichever tracker is selected: **Log**, **History**,
 **Charts**. What each shows depends on the tracker — a rating tracker paints the
-week as a colour run and the month by colour; Habits shows a tile per habit with
-the day's count, and paints the calendar with a dot per habit logged.
+week as a colour run and the month by colour; Habits and Health show a tile per
+kind with the day's count, and paint the calendar with a dot per kind logged.
 
-## Habits
+## The two event logs
 
-Habits does not rate anything. It logs events: one row per tea, per session, per
-meal, per sugar, per nap, each with its own detail. Tapping the same tile twice
-records two things, so "how many times" is the count rather than a field you have
-to fill in.
+Habits and Health do not rate anything. They log events: one row per tea, per
+session, per meal, per bout of reflux, each with its own detail. Tapping the same
+tile twice records two things, so "how many times" is the count rather than a
+field you have to fill in.
+
+Both run on the same code. What a tracker logs, what each kind asks for, whether
+a kind takes a comment and what its charts show are all declared in `TRACKERS`;
+nothing in the renderers branches on a tracker's name. Adding a kind is adding an
+entry to `kinds`.
+
+### Habits
 
 | Habit | What it records |
 |---|---|
@@ -48,14 +56,41 @@ you wrote it, which is often the evening. The time chips arrive pre-selected fro
 the current time, so logging as it happens costs nothing extra and logging late
 costs one tap.
 
-Naps live here rather than on Sleep. A nap happens after the night has already
+### Health
+
+Health is the same machinery pointed at symptoms rather than choices.
+
+| Kind | What it records |
+|---|---|
+| GI issues | Acid reflux, gas, stomach ache, heartburn (any combination), mild/medium/bad, and the time of day |
+| Poopy pain | Mild/medium/bad, and the time of day |
+
+Both kinds take a **comment of their own** — what you ate, how long it lasted,
+what helped. It is the part worth keeping, so it shows under the entry everywhere
+it is listed: on the Log tab, in the History day sheet, and in its own column in
+the CSV. Comments are optional; the chips are not.
+
+Log a bout each time one happens. Two bouts in one afternoon are two entries, and
+the charts count them as two times on one day — the left number on every row is
+how many times, the right one is how many days it landed on.
+
+Health has no comparison blocks against Sleep or Days. The question it answers is
+how often, not what caused what, so its Charts tab is counts: per kind, how many
+times, how many days, what share of the range that is, how often that works out
+to in a week, and then the split by symptom, by severity and by time of day.
+Shares and weekly averages divide by the days the range actually covers — not by
+the days you logged something, which for a symptom you only log when it happens
+would read as every single day.
+
+Naps live under Habits rather than on Sleep. A nap happens after the night has already
 been logged, and it belongs to the same day as the caffeine and the exercise that
 share the blame for the next night. The sleep entry for a date shows the previous
 day's naps as a line of context, but does not store them.
 
 ## Correlation
 
-Because Habits records the day and Sleep records the night, the charts join them
+Habits alone carries this: it declares `corr:["sleep","days"]` and Health does
+not. Because Habits records the day and Sleep records the night, the charts join them
 with an offset: **habits on a day are compared against the night that follows it,
 and against that same day's Days entry.** Each comparison splits the days in two
 — caffeine after 12pm or not, napped or not — and reports how each half turned
@@ -80,6 +115,7 @@ Each tracker sets both, so the two can be as strict as they need to be:
 |---|---|---|---|
 | Sleep | 3 | 1 | fill in three days back; change only on the day itself |
 | Habits | 7 | 1 | add to the last week; change only on the day itself |
+| Health | 7 | 1 | add to the last week; change only on the day itself |
 | Days | 7 | 7 | fill in or change anything in the last week |
 
 Where `change` is 1, a backfilled date locks the moment it is saved — the day it
@@ -87,8 +123,8 @@ describes has already gone — so saving one asks first. Past that an entry
 stands: no edit, no delete, no re-entry. On Sleep the history is a record rather
 than a draft, which is the point of keeping it.
 
-Habits reads these slightly differently, because an event log has no "blank"
-date — another instance can always be added. So `backfill` governs **adding** an
+The event logs read these slightly differently, because an event log has no
+"blank" date — another instance can always be added. So `backfill` governs **adding** an
 instance and `change` governs **editing or deleting** one: the whole visible week
 stays open to catch up on, but nothing already written can be revised after its
 own day. The window matches the Log strip, so every day you can see is a day you
@@ -98,12 +134,18 @@ All four permissions are enforced in `putDay`, `clearDay`, `putItem` and
 `removeItem`, not only in the buttons, so a stale pane cannot write through them.
 
 Backups are prompted once a week rather than daily: on Sunday a count appears on
-the DATA button. One backup file holds both trackers. Exports go through the OS
+the DATA button. One backup file holds every tracker. Exports go through the OS
 share sheet where one exists, which is how the file reaches Google Drive or
 iCloud from a phone. Backups taken before the sleep tracker existed restore
 cleanly — every entry in them is read as a day — and a backup holding habits
 restores into an older build without losing them, because rows from an unknown
-tracker are carried through untouched rather than dropped.
+tracker are carried through untouched rather than dropped. Health rows restore
+the same way, and need no schema bump: they are the habits row shape — a day
+holding `items` — under a different tracker.
+
+The CSV writes one line per rating and one line per logged instance, with the
+instance's own comment on its line. Its `kind` column was called `habit` before
+Health existed.
 
 A saved day locks itself and reads back as a summary; changing it takes a
 deliberate tap. Editing only ever happens on the Log tab, on every tracker.
