@@ -191,6 +191,11 @@ textarea:focus,input:focus{outline:2px solid var(--dim);outline-offset:-1px;bord
 .cal .cell.today{outline:2px solid var(--text);outline-offset:2px}
 .cal .cell .nt{position:absolute;bottom:6px;left:50%;margin-left:-2px;width:4px;height:4px;
   border-radius:50%;background:rgba(18,21,28,.45)}
+/* the rating cells are painted bright, so the dot reads as a dark fleck on them;
+   a habit/health cell stays the dark surface colour, so it needs a light one
+   instead — and sits in the corner, clear of the number and the kind dots
+   already centred underneath it */
+.cal .cell.hab .nt{background:var(--dim);bottom:auto;top:3px;right:3px;left:auto;margin-left:0}
 .cal .cell.locked{opacity:.86}
 .legend{display:flex;gap:14px;margin-top:16px;flex-wrap:wrap}
 .legend div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
@@ -389,7 +394,7 @@ nav button.on .ind{background:var(--text)}
 
 <script>
 "use strict";
-const APP_VERSION = "1.12.1";
+const APP_VERSION = "1.12.2";
 const SCHEMA_VERSION = 3;   /* 2 adds `tracker` to every row; rows without one are days.
                                3 adds the log-tracker row, which carries `items` and no
                                rating. Health rows are that same shape, so adding the
@@ -940,6 +945,11 @@ function dotsHTML(k){
   return '<span class="hdots">' + kindsOn(k).map(x =>
     '<i style="background:' + KINDS[x].hex + '"></i>').join("") + '</span>';
 }
+/* whether a day is worth a second look: a rating day's own comment, or any
+   instance logged on it leaving one — the calendar marks either the same way */
+function dayNoted(k, e){
+  return isLog() ? liveItems(k).some(it => it.note) : !!(e && e.note);
+}
 
 function renderLog(){
   if(isLog()) return renderItemLog();
@@ -1313,7 +1323,7 @@ function renderHistory(){
       (future ? " future" : "") + (k === todayKey() ? " today" : "") +
       (!open && !future ? " locked" : "") + '" data-d="' + k + '"' +
       (future ? " disabled" : "") + '>' + d +
-      (isLog() ? dotsHTML(k) : (e && e.note ? '<span class="nt"></span>' : '')) + '</button>';
+      (isLog() ? dotsHTML(k) : "") + (dayNoted(k, e) ? '<span class="nt"></span>' : '') + '</button>';
   }
 
   view.innerHTML =
@@ -2019,10 +2029,24 @@ function forceUpdate(){
 
 /* ================= boot ================= */
 window.addEventListener("error", ev => logErr("uncaught", ev.error || ev.message));
+/* agoOf(logDate) can't tell a midnight rollover from a deliberate look back at
+   an older day — both move it from 0 to positive. So the day actually seen
+   last is tracked here, and only a logDate that WAS today gets carried
+   forward when today changes; a day picked on purpose is left alone.
+   Whichever way that goes, the day itself changing stales every pane and the
+   header's date line — History's "today" ring, Charts' range cutoff and the
+   Log strip's own dates are all computed from it, whether or not logDate
+   moved, and whether or not the tab showing them is the one on screen. */
+let lastSeenToday = todayKey();
 document.addEventListener("visibilitychange", () => {
-  /* midnight rollover while the app sat open */
   if(document.hidden) return;
-  if(agoOf(logDate) < 0){ logDate = todayKey(); loadDraft(); stale.log = true; }
+  const today = todayKey();
+  if(today !== lastSeenToday){
+    if(logDate === lastSeenToday){ logDate = today; loadDraft(); }
+    stale.log = stale.history = stale.charts = true;
+    renderHeader();
+    lastSeenToday = today;
+  }
   if(stale[tab]) refreshCurrent();
   refreshNotices();
   if("serviceWorker" in navigator)
