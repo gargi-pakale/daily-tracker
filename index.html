@@ -2032,13 +2032,19 @@ window.addEventListener("error", ev => logErr("uncaught", ev.error || ev.message
 /* agoOf(logDate) can't tell a midnight rollover from a deliberate look back at
    an older day — both move it from 0 to positive. So the day actually seen
    last is tracked here, and only a logDate that WAS today gets carried
-   forward when today changes; a day picked on purpose is left alone. */
+   forward when today changes; a day picked on purpose is left alone.
+   Whichever way that goes, the day itself changing stales every pane and the
+   header's date line — History's "today" ring, Charts' range cutoff and the
+   Log strip's own dates are all computed from it, whether or not logDate
+   moved, and whether or not the tab showing them is the one on screen. */
 let lastSeenToday = todayKey();
 document.addEventListener("visibilitychange", () => {
   if(document.hidden) return;
   const today = todayKey();
   if(today !== lastSeenToday){
-    if(logDate === lastSeenToday){ logDate = today; loadDraft(); stale.log = true; }
+    if(logDate === lastSeenToday){ logDate = today; loadDraft(); }
+    stale.log = stale.history = stale.charts = true;
+    renderHeader();
     lastSeenToday = today;
   }
   if(stale[tab]) refreshCurrent();
